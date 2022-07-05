@@ -149,10 +149,10 @@ See the [open issues](https://github.com/DevonMillerJunk/CapstoneProject/issues)
 <!-- CONTACT -->
 ## Contact
 
-Devon Miller-Junk - [dsmiller@uwaterloo.ca](mailto:dsmiller@uwaterloo.ca)
-Johan Alant - [jalant@uwaterloo.ca](mailto:jalant@uwaterloo.ca)
-Yrina Guarisma - [yguarisma@uwaterloo.ca](mailto:yguarisma@uwaterloo.ca)
-Braden Bakker - [bgobakker@uwaterloo.ca](mailto:bgobakker@uwaterloo.ca)
+* Devon Miller-Junk - [dsmiller@uwaterloo.ca](mailto:dsmiller@uwaterloo.ca)
+* Johan Alant - [jalant@uwaterloo.ca](mailto:jalant@uwaterloo.ca)
+* Yrina Guarisma - [yguarisma@uwaterloo.ca](mailto:yguarisma@uwaterloo.ca)
+* Braden Bakker - [bgobakker@uwaterloo.ca](mailto:bgobakker@uwaterloo.ca)
 
 Project Link: [https://github.com/DevonMillerJunk/CapstoneProject](https://github.com/DevonMillerJunk/CapstoneProject)
 
@@ -175,12 +175,12 @@ Special Thanks to all of the following for their assistance with this project
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/DevonMillerJunk/CapstoneProject.svg?style=for-the-badge
 [contributors-url]: https://github.com/DevonMillerJunk/CapstoneProject/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/DevonMillerJunk/CapstoneProject.svg?style=for-the-badge
 [forks-url]: https://github.com/DevonMillerJunk/CapstoneProject/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/DevonMillerJunk/CapstoneProject.svg?style=for-the-badge
 [stars-url]: https://github.com/DevonMillerJunk/CapstoneProject/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/DevonMillerJunk/CapstoneProject.svg?style=for-the-badge
 [issues-url]: https://github.com/DevonMillerJunk/CapstoneProject/issues
 [product-screenshot]: images/screenshot.png
