@@ -76,7 +76,7 @@ def send_deal():
     get_rec = ""
     print("")
     print(
-        "input a string such as \033[1;32m0,868,Hello World\033[0m,it will send `Hello World` to lora node device of address 0 with 868M "
+        "input a string such as \033[1;32m0,915,Hello World\033[0m,it will send `Hello World` to lora node device of address 0 with 915M "
     )
     print("please input and press Enter key:", end='', flush=True)
 
@@ -116,19 +116,21 @@ def send_cpu_continue(continue_or_not=True):
         #
         # broadcast the cpu temperature at 915MHz
         #
-        data = bytes([255]) + bytes([255]) + bytes([18]) + bytes([
-            255
-        ]) + bytes([255]) + bytes([12]) + "CPU Temperature:".encode() + str(
-            get_cpu_temp()).encode() + " C".encode()
+
+        offset_freq = 915 - 850
+        data = bytes([255]) + bytes([255]) + bytes([offset_freq]) + bytes(
+            [255]) + bytes([255]) + bytes(
+                [node.offset_freq]) + "CPU Temperature:".encode() + str(
+                    get_cpu_temp()).encode() + " C".encode()
         node.send(data)
         time.sleep(0.2)
         timer_task = Timer(seconds, send_cpu_continue)
         timer_task.start()
     else:
-        data = bytes([255]) + bytes([255]) + bytes([18]) + bytes([
-            255
-        ]) + bytes([255]) + bytes([12]) + "CPU Temperature:".encode() + str(
-            get_cpu_temp()).encode() + " C".encode()
+        data = bytes([255]) + bytes([255]) + bytes([offset_freq]) + bytes(
+            [255]) + bytes([255]) + bytes(
+                [node.offset_freq]) + "CPU Temperature:".encode() + str(
+                    get_cpu_temp()).encode() + " C".encode()
         node.send(data)
         time.sleep(0.2)
         timer_task.cancel()

@@ -32,7 +32,7 @@ class sx126x:
     #
     # E22-400T22S           E22-900T22S
     # 410~493MHz      or    850~930MHz
-    offset_freq = 18
+    offset_freq = 915 - 850
 
     # power = 22
     # air_speed =2400
@@ -232,9 +232,10 @@ class sx126x:
             print("Frequence is {0}.125MHz.", fre_temp)
             print("Node address is {0}.", addr_temp)
             print("Air speed is {0} bps" +
-                  lora_air_speed_dic.get(None, air_speed_temp))
-            print("Power is {0} dBm" + lora_power_dic.get(None, power_temp))
-            GPIO.output(M1, GPIO.LOW)
+                  self.lora_air_speed_dic.get(None, air_speed_temp))
+            print("Power is {0} dBm" +
+                  self.lora_power_dic.get(None, power_temp))
+            GPIO.output(self.M1, GPIO.LOW)
 
 
 #
