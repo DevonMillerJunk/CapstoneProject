@@ -1,5 +1,6 @@
 # This file is used for LoRa and Raspberry pi4B related issues
 
+from numpy import broadcast
 import RPi.GPIO as GPIO
 import serial
 import time
@@ -21,7 +22,12 @@ class LoRa_socket:
     serial_n = constants.SERIAL_NUM
     power = constants.POWER
     freq = constants.FREQ
+    start_freq = 850
+    offset_freq = constants.OFFSET_FREQ
     ser = None
+    connected_address = 0
+    connected_freq = constants.OFFSET_FREQ
+    packet_num = 0
 
     def __init__(self,serial_num=constants.SERIAL_NUM,freq=constants.FREQ,\
                  addr=0,power=constants.POWER,rssi=False,air_speed=constants.AIR_SPEED,\
@@ -29,6 +35,7 @@ class LoRa_socket:
                  relay=False,lbt=False,wor=False):
         self.rssi = rssi
         self.addr = addr
+        self.packet_num = 0
         self.freq = freq
         self.serial_n = serial_num
         self.power = power
@@ -169,7 +176,7 @@ class LoRa_socket:
     #
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
-    def send(self, address: int, rec_freq: int, payload):
+    def __send_packet(self, address: int, rec_freq: int, payload):
         data = bytes([address >> 8]) +\
                bytes([address & 0xff]) +\
                bytes([rec_freq]) +\
@@ -177,8 +184,17 @@ class LoRa_socket:
                bytes([self.addr & 0xff]) +\
                bytes([self.offset_freq]) +\
                payload.encode()
-
         self.__raw_send(data)
+
+    def send(self, address: int , rec_freq: int, payload):
+        retries = 0
+        while not response and retries <= 3:
+            self.__send_packet(address, rec_freq, payload)
+            response = tuple(self.__receive())
+            if not response:
+                retries +=1
+        self.packet_num = int(response)
+
 
     def broadcast(self, payload):
         data = bytes([255]) +\
@@ -188,7 +204,6 @@ class LoRa_socket:
                bytes([255]) +\
                bytes([self.offset_freq]) +\
                payload.encode()
-
         self.__raw_send(data)
 
 
@@ -202,7 +217,23 @@ class LoRa_socket:
         # self.__get_channel_rssi()
         time.sleep(0.1)
 
-    def recv(self):
+    def __send_ack(self):
+        self.packet_num +=1
+        data = bytes([self.connected_address >> 8]) +\
+               bytes([self.connected_address & 0xff]) +\
+               bytes([self.connected_freq]) +\
+               bytes([self.addr >> 8]) +\
+               bytes([self.addr & 0xff]) +\
+               bytes([self.offset_freq]) +\
+               self.packet_num.encode()
+        self.__raw_send(data)
+
+
+    def __receive(self):
+        timeout = 0
+        while self.ser.inWaiting() <= 0 and timeout < 5:
+            time.sleep(0.1)
+            timeout += 0.1
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff = self.ser.read(self.ser.inWaiting())
@@ -226,6 +257,33 @@ class LoRa_socket:
                 pass
                 #print('\x1b[2A',end='\r')
             return msg
+        else:
+            return None
+
+    def recv(self):
+        res = self.__receive()
+        self.__send_ack()
+        return res
+
+    def connect(self):
+        retries = 0
+        while not response and retries <= 3:
+            payload = (self.addr, self.offset_freq)
+            self.broadcast(payload)
+            response = tuple(self.__receive())
+            if not response:
+                retries +=1
+        self.connected_address = response[0]
+        self.connected_freq = response[1]
+        print("connected to" + self.connected_address + ", " + self.connected_freq)
+
+    def accept(self):
+        listen = tuple(self.__receive())
+        self.connected_address = listen[0]
+        self.connected_freq = listen[1]
+        payload = (self.addr, self.offset_freq)
+        self.__send_packet(self.connected_address, self.connected_freq, payload)
+        print("accepted connection request from" + self.connected_address + ", " + self.connected_freq)
 
     def __get_channel_rssi(self):
         GPIO.output(self.M1, GPIO.LOW)
