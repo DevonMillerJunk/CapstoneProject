@@ -32,7 +32,7 @@ class sx126x:
     #
     # E22-400T22S           E22-900T22S
     # 410~493MHz      or    850~930MHz
-    offset_freq = 915 - 850
+    offset_freq = 14
 
     # power = 22
     # air_speed =2400
@@ -174,7 +174,7 @@ class sx126x:
             self.cfg_reg[10] = h_crypt
             self.cfg_reg[11] = l_crypt
         self.ser.flushInput()
-
+        print(self.cfg_reg)
         for i in range(2):
             self.ser.write(bytes(self.cfg_reg))
             r_buff = 0
@@ -183,16 +183,15 @@ class sx126x:
                 time.sleep(0.1)
                 r_buff = self.ser.read(self.ser.inWaiting())
                 if r_buff[0] == 0xC1:
-                    pass
-                    # print("parameters setting is :",end='')
-                    # for i in self.cfg_reg:
-                    # print(hex(i),end=' ')
+                    print("parameters setting is :",end='')
+                    for i in self.cfg_reg:
+                        print(hex(i),end=' ')
+                    print('\r\n')
 
-                    # print('\r\n')
-                    # print("parameters return is  :",end='')
-                    # for i in r_buff:
-                    # print(hex(i),end=' ')
-                    # print('\r\n')
+                    print("parameters return is  :",end='')
+                    for i in r_buff:
+                        print(hex(i),end=' ')
+                    print('\r\n')
                 else:
                     pass
                     #print("parameters setting fail :",r_buff)
@@ -229,8 +228,8 @@ class sx126x:
             air_speed_temp = self.get_reg[6] & 0x03
             power_temp = self.get_reg[7] & 0x03
 
-            print("Frequence is {0}.125MHz.", fre_temp)
-            print("Node address is {0}.", addr_temp)
+            print("Frequence is {0}.125MHz." + fre_temp)
+            print("Node address is {0}." + addr_temp)
             print("Air speed is {0} bps" +
                   self.lora_air_speed_dic.get(None, air_speed_temp))
             print("Power is {0} dBm" +
