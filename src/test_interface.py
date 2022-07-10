@@ -26,6 +26,8 @@ from threading import Timer
 old_settings = termios.tcgetattr(sys.stdin)
 tty.setcbreak(sys.stdin.fileno())
 
+TX = True
+
 #    The following is to obtain the temprature of the RPi CPU
 def get_cpu_temp():
     tempFile = open("/sys/class/thermal/thermal_zone0/temp")
@@ -81,7 +83,7 @@ def send_cpu_continue(continue_or_not=True):
     else:
         offset_freq = 915 - 850
         data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
-        node.broadcast(data)
+        node.send(data)
         time.sleep(0.2)
         timer_task.cancel()
         pass
@@ -94,6 +96,11 @@ try:
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
+
+    if TX:
+        node.connect()
+    else:
+        node.accept()
 
     while True:
 

@@ -177,13 +177,15 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, rec_freq: int, payload):
+        pl = payload.encode()
+        length = len(pl)
         data = bytes([address >> 8]) +\
                bytes([address & 0xff]) +\
                bytes([rec_freq]) +\
                bytes([self.addr >> 8]) +\
                bytes([self.addr & 0xff]) +\
                bytes([self.offset_freq]) +\
-               payload.encode()
+               bytes(length) + pl
         self.__raw_send(data)
 
     def send(self, address: int , rec_freq: int, payload):
@@ -197,13 +199,15 @@ class LoRa_socket:
 
 
     def broadcast(self, payload):
+        pl = payload.encode()
+        length = len(pl)
         data = bytes([255]) +\
                bytes([255]) +\
                bytes([constants.OFFSET_FREQ]) +\
                bytes([255]) +\
                bytes([255]) +\
                bytes([self.offset_freq]) +\
-               payload.encode()
+               bytes(length) + pl
         self.__raw_send(data)
 
 
@@ -225,21 +229,23 @@ class LoRa_socket:
                bytes([self.addr >> 8]) +\
                bytes([self.addr & 0xff]) +\
                bytes([self.offset_freq]) +\
+               bytes(1) +\
                self.packet_num.encode()
         self.__raw_send(data)
 
 
     def __receive(self):
         timeout = 0
-        while self.ser.inWaiting() <= 0 and timeout < 5:
+        while self.ser.inWaiting() <= 0 and timeout < 1:
             time.sleep(0.1)
             timeout += 0.1
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
-            r_buff = self.ser.read(self.ser.inWaiting())
+            r_buff = self.ser.read(4)
             address = (r_buff[0] << 8) + r_buff[1]
             freq = r_buff[2] + self.start_freq
-            msg = r_buff[3:-1]
+            len = r_buff[3]
+            msg = self.ser.read(len)
 
             print(
                 "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"

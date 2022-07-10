@@ -30,7 +30,7 @@ SX126X_Power_10dBm = 0x03
 #
 # E22-400T22S           E22-900T22S
 # 410~493MHz      or    850~930MHz
-FREQ = 897
+FREQ = 915
 OFFSET_FREQ = 18
 
 # Air Speed (I *THINK* this is bit rate (kbps))
