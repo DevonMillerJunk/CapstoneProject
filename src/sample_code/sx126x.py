@@ -32,7 +32,8 @@ class sx126x:
     #
     # E22-400T22S           E22-900T22S
     # 410~493MHz      or    850~930MHz
-    offset_freq = 14
+
+    offset_freq = 18
 
     # power = 22
     # air_speed =2400
@@ -174,7 +175,9 @@ class sx126x:
             self.cfg_reg[10] = h_crypt
             self.cfg_reg[11] = l_crypt
         self.ser.flushInput()
-        print(self.cfg_reg)
+
+        print(f"Registers: {self.cfg_reg}")
+
         for i in range(2):
             self.ser.write(bytes(self.cfg_reg))
             r_buff = 0
@@ -187,7 +190,6 @@ class sx126x:
                     for i in self.cfg_reg:
                         print(hex(i),end=' ')
                     print('\r\n')
-
                     print("parameters return is  :",end='')
                     for i in r_buff:
                         print(hex(i),end=' ')
