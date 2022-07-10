@@ -139,6 +139,7 @@ def send_cpu_continue(continue_or_not=True):
 
 try:
     time.sleep(1)
+    print("Starting")
     print("Press \033[1;32mEsc\033[0m to exit")
     print("Press \033[1;32mi\033[0m   to send")
     print(
