@@ -23,6 +23,7 @@ import select
 import termios
 import csv
 import tty
+import argparse
 from threading import Timer
 
 old_settings = termios.tcgetattr(sys.stdin)
@@ -103,11 +104,11 @@ def send_deal():
         ]) + bytes([node.offset_freq]) + get_t[2].encode()
 
     node.send(data)
-    print('\x1b[2A', end='\r')
-    print(" " * 200)
-    print(" " * 200)
-    print(" " * 200)
-    print('\x1b[3A', end='\r')
+    # print('\x1b[2A', end='\r')
+    # print(" " * 200)
+    # print(" " * 200)
+    # print(" " * 200)
+    # print('\x1b[3A', end='\r')
 
 
 def send_cpu_continue(continue_or_not=True):
@@ -143,6 +144,9 @@ def process_rx_values_to_file(msg_values, file_string):
         writer = csv.writer(f)
         writer.writerow(msg_values)
 
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("file_name", help="A string of the csv output data file path", type=str)
+args = arg_parser.parse_args()
 
 try:
     time.sleep(1)
@@ -153,7 +157,7 @@ try:
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
-    csv_file = "dummy3.csv"
+    csv_file = args.file_name
 
     with open(csv_file, "w", encoding="UTF8") as f:
         writer = csv.writer(f)
