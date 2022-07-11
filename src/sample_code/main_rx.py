@@ -21,6 +21,7 @@ import threading
 import time
 import select
 import termios
+import csv
 import tty
 from threading import Timer
 
@@ -136,17 +137,29 @@ def send_cpu_continue(continue_or_not=True):
         timer_task.cancel()
         pass
 
+def process_rx_values_to_file(msg_values, file_string):
+
+    with open(file_string, 'w', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        header = ["Address", "Frequency", "Message", "String Message", "Packet RSSI", "Channel RSSI"]
+        if len(msg_values) < 5:
+            writer.writerow(header[:-2])
+            writer.writerow(msg_values)
+        else:
+            writer.writerow(header)
+            writer.writerow(msg_values)
+
 
 try:
     time.sleep(1)
     print("Starting")
     print("Press \033[1;32mEsc\033[0m to exit")
-    print("Press \033[1;32mi\033[0m   to send")
-    print(
-        "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
+    #print("Press \033[1;32mi\033[0m   to send")
+    #print("Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
+    txt_file = "dummy.csv"
 
     while True:
 
@@ -156,11 +169,11 @@ try:
 
             # dectect key Esc
             if c == '\x1b': break
-           # # dectect key i
-           # if c == '\x69':
+            # dectect key i
+            # if c == '\x69':
             #    send_deal()
             # dectect key s
-            #if c == '\x73':
+            # if c == '\x73':
              #   print("Press \033[1;32mc\033[0m   to exit the send task")
               #  timer_task = Timer(seconds, send_cpu_continue)
                # timer_task.start()
@@ -175,7 +188,9 @@ try:
 
             #sys.stdout.flush()
 
-        node.receive()
+        rx_values = node.receive()
+        if len(rx_values) > 0: 
+            process_rx_values_to_file(rx_values, txt_file)
 
         # timer,send messages automatically
 

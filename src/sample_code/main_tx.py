@@ -72,7 +72,7 @@ node = sx126x.sx126x(serial_num="/dev/ttyS0",
                      relay=False)
 
 
-def send_deal():
+def send_from_stdin():
     get_rec = ""
     print("")
     print(
@@ -87,7 +87,11 @@ def send_deal():
             get_rec += rec
             sys.stdout.write(rec)
             sys.stdout.flush()
+    
+    send_deal(get_rec)
 
+def send_deal(get_rec):
+  
     get_t = get_rec.split(",")
 
     offset_frequence = int(get_t[1]) - (850 if int(get_t[1]) > 850 else 410)
@@ -102,11 +106,11 @@ def send_deal():
         ]) + bytes([node.offset_freq]) + get_t[2].encode()
 
     node.send(data)
-    print('\x1b[2A', end='\r')
-    print(" " * 200)
-    print(" " * 200)
-    print(" " * 200)
-    print('\x1b[3A', end='\r')
+    # print('\x1b[2A', end='\r')
+    # print(" " * 200)
+    # print(" " * 200)
+    # print(" " * 200)
+    # print('\x1b[3A', end='\r')
 
 
 def send_cpu_continue(continue_or_not=True):
@@ -141,9 +145,9 @@ try:
     time.sleep(1)
     print("Starting")
     print("Press \033[1;32mEsc\033[0m to exit")
-    print("Press \033[1;32mi\033[0m   to send")
-    print(
-        "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
+    print("Press \033[1;32mi\033[0m to send basic string 'xxxx' ")
+    # print(
+    #     "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
@@ -157,20 +161,24 @@ try:
             if c == '\x1b': break
             # dectect key i
             if c == '\x69':
-                send_deal()
-            # dectect key s
-            if c == '\x73':
-                print("Press \033[1;32mc\033[0m   to exit the send task")
-                timer_task = Timer(seconds, send_cpu_continue)
-                timer_task.start()
+                # Send data for 15s
+                t_end = time.time() + 15
+                while time.time() < t_end:      
+                    send_deal(get_rec="0,915,xxxx")
+                    send_deal(get_rec="0,915,yyyy")
+            # # dectect key s
+            # if c == '\x73':
+            #     print("Press \033[1;32mc\033[0m   to exit the send task")
+            #     timer_task = Timer(seconds, send_cpu_continue)
+            #     timer_task.start()
 
-                while True:
-                    if sys.stdin.read(1) == '\x63':
-                        timer_task.cancel()
-                        print('\x1b[1A', end='\r')
-                        print(" " * 100)
-                        print('\x1b[1A', end='\r')
-                        break
+            #     while True:
+            #         if sys.stdin.read(1) == '\x63':
+            #             timer_task.cancel()
+            #             print('\x1b[1A', end='\r')
+            #             print(" " * 100)
+            #             print('\x1b[1A', end='\r')
+            #             break
 
             sys.stdout.flush()
 

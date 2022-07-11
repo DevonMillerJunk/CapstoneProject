@@ -253,26 +253,33 @@ class sx126x:
         time.sleep(0.1)
 
     def receive(self):
+        rx_values = []
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff = self.ser.read(self.ser.inWaiting())
 
             print(
-                "receive message from node address with frequence\033[1;32m %d,%d.125MHz\033[0m"
+                "receive message from node address \033[1;32m %d, with frequency %d.125MHz\033[0m"
                 % ((r_buff[0] << 8) + r_buff[1], r_buff[2] + self.start_freq),
                 end='\r\n',
                 flush=True)
             print("message is " + str(r_buff[3:-1]), end='\r\n')
 
+            # Node Address, Frequency, msg_no string, string msg, rssi (if available)
+            rx_values = [(r_buff[0] << 8) + r_buff[1], r_buff[2] + self.start_freq, r_buff[3:-1], str(r_buff[3:-1])]
+
             # print the rssi
             if self.rssi:
                 # print('\x1b[3A',end='\r')
-                print("the packet rssi value: -{0}dBm".format(256 -
-                                                              r_buff[-1:][0]))
-                self.get_channel_rssi()
+                print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
+                rx_values.append(256 - r_buff[-1:][0])
+                chan_rssi = self.get_channel_rssi()
+                if chan_rssi:
+                    rx_values.append(chan_rssi)
             else:
                 pass
                 #print('\x1b[2A',end='\r')
+        return rx_values
 
     def get_channel_rssi(self):
         GPIO.output(self.M1, GPIO.LOW)
@@ -286,10 +293,11 @@ class sx126x:
             time.sleep(0.1)
             re_temp = self.ser.read(self.ser.inWaiting())
         if re_temp[0] == 0xC1 and re_temp[1] == 0x00 and re_temp[2] == 0x02:
-            print("the current noise rssi value: -{0}dBm".format(256 -
-                                                                 re_temp[3]))
+            print("the current noise rssi value: -{0}dBm".format(256 - re_temp[3]))
+            return 256 - re_temp[3]
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
         else:
             # pass
             print("receive rssi value fail")
+            return
             # print("receive rssi value fail: ",re_temp)
