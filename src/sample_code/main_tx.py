@@ -162,10 +162,10 @@ try:
             # dectect key i
             if c == '\x69':
                 # Send data for 15s
-                t_end = time.time() + 15
+                t_end = time.time() + 20
                 while time.time() < t_end:      
                     send_deal(get_rec="0,915,xxxx")
-                    send_deal(get_rec="0,915,yyyy")
+                print("Completed One Cycle")
             # # dectect key s
             # if c == '\x73':
             #     print("Press \033[1;32mc\033[0m   to exit the send task")
