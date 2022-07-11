@@ -139,15 +139,9 @@ def send_cpu_continue(continue_or_not=True):
 
 def process_rx_values_to_file(msg_values, file_string):
 
-    with open(file_string, 'w', encoding='UTF8') as f:
+    with open(file_string, 'a', encoding='UTF8') as f:
         writer = csv.writer(f)
-        header = ["Address", "Frequency", "Message", "String Message", "Packet RSSI", "Channel RSSI"]
-        if len(msg_values) < 5:
-            writer.writerow(header[:-2])
-            writer.writerow(msg_values)
-        else:
-            writer.writerow(header)
-            writer.writerow(msg_values)
+        writer.writerow(msg_values)
 
 
 try:
@@ -159,7 +153,12 @@ try:
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
-    txt_file = "dummy.csv"
+    csv_file = "dummy3.csv"
+
+    with open(csv_file, "w", encoding="UTF8") as f:
+        writer = csv.writer(f)
+        header = ["Address", "Frequency", "Message", "String Message", "Packet RSSI", "Channel RSSI"]
+        writer.writerow(header)
 
     while True:
 
@@ -190,7 +189,7 @@ try:
 
         rx_values = node.receive()
         if len(rx_values) > 0: 
-            process_rx_values_to_file(rx_values, txt_file)
+            process_rx_values_to_file(rx_values, csv_file)
 
         # timer,send messages automatically
 
