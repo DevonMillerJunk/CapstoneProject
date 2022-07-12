@@ -16,12 +16,11 @@
 #
 
 import sys
-import sx126x
+import sample_code.sx126x as sx126x
 import threading
 import time
 import select
 import termios
-import csv
 import tty
 import argparse
 from threading import Timer
@@ -74,7 +73,7 @@ node = sx126x.sx126x(serial_num="/dev/ttyS0",
                      relay=False)
 
 
-def send_deal():
+def send_from_stdin():
     get_rec = ""
     print("")
     print(
@@ -89,7 +88,11 @@ def send_deal():
             get_rec += rec
             sys.stdout.write(rec)
             sys.stdout.flush()
+    
+    send_deal(get_rec)
 
+def send_deal(get_rec):
+  
     get_t = get_rec.split(",")
 
     offset_frequence = int(get_t[1]) - (850 if int(get_t[1]) > 850 else 410)
@@ -138,62 +141,53 @@ def send_cpu_continue(continue_or_not=True):
         timer_task.cancel()
         pass
 
-def process_rx_values_to_file(msg_values, file_string):
-
-    with open(file_string, 'a', encoding='UTF8') as f:
-        writer = csv.writer(f)
-        writer.writerow(msg_values)
-
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("file_name", help="A string of the csv output data file path", type=str)
+arg_parser.add_argument("transmit_time", help="An int in seconds of time to be transmitting", type=int)
+arg_parser.add_argument("transmit_string", help="A string to transmit", type=str)
 args = arg_parser.parse_args()
 
 try:
     time.sleep(1)
     print("Starting")
     print("Press \033[1;32mEsc\033[0m to exit")
-    #print("Press \033[1;32mi\033[0m   to send")
-    #print("Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
+    print("Press \033[1;32mi\033[0m to send provided string")
+    # print(
+    #     "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
-    csv_file = args.file_name
-
-    with open(csv_file, "w", encoding="UTF8") as f:
-        writer = csv.writer(f)
-        header = ["Address", "Frequency", "Message", "String Message", "Packet RSSI", "Channel RSSI"]
-        writer.writerow(header)
 
     while True:
 
         if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-            print("Selection Complete")
             c = sys.stdin.read(1)
 
             # dectect key Esc
             if c == '\x1b': break
             # dectect key i
-            # if c == '\x69':
-            #    send_deal()
-            # dectect key s
+            if c == '\x69':
+                # Send data for 15s
+                t_end = time.time() + args.transmit_time
+                while time.time() < t_end:      
+                    send_deal(get_rec=f"0,915,{args.transmit_string}")
+                print("Completed One Cycle")
+            # # dectect key s
             # if c == '\x73':
-             #   print("Press \033[1;32mc\033[0m   to exit the send task")
-              #  timer_task = Timer(seconds, send_cpu_continue)
-               # timer_task.start()
+            #     print("Press \033[1;32mc\033[0m   to exit the send task")
+            #     timer_task = Timer(seconds, send_cpu_continue)
+            #     timer_task.start()
 
-                #while True:
-                 #   if sys.stdin.read(1) == '\x63':
-                  #      timer_task.cancel()
-                   #     print('\x1b[1A', end='\r')
-                    #    print(" " * 100)
-                     #   print('\x1b[1A', end='\r')
-                      #  break
+            #     while True:
+            #         if sys.stdin.read(1) == '\x63':
+            #             timer_task.cancel()
+            #             print('\x1b[1A', end='\r')
+            #             print(" " * 100)
+            #             print('\x1b[1A', end='\r')
+            #             break
 
-            #sys.stdout.flush()
+            sys.stdout.flush()
 
-        rx_values = node.receive()
-        if len(rx_values) > 0: 
-            process_rx_values_to_file(rx_values, csv_file)
+        #node.receive()
 
         # timer,send messages automatically
 
