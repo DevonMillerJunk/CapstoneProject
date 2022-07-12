@@ -16,7 +16,7 @@
 #
 
 import sys
-import sample_code.sx126x as sx126x
+import sx126x
 import threading
 import time
 import select
