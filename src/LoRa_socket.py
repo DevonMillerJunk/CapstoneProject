@@ -5,6 +5,7 @@ import RPi.GPIO as GPIO
 import serial
 import time
 import constants
+import error_encoding.crc as crc   
 
 
 class LoRa_socket:
@@ -31,7 +32,7 @@ class LoRa_socket:
 
     def __init__(self,serial_num=constants.SERIAL_NUM,freq=constants.FREQ,\
                  addr=0,power=constants.POWER,rssi=False,air_speed=constants.AIR_SPEED,\
-                 net_id=0,buffer_size = 240,crypt=0,\
+                 net_id=0,buffer_size = constants.BUF_SZ,crypt=0,\
                  relay=False,lbt=False,wor=False):
         self.rssi = rssi
         self.addr = addr
@@ -39,6 +40,7 @@ class LoRa_socket:
         self.freq = freq
         self.serial_n = serial_num
         self.power = power
+        self.crc = crc.CRC(self.crc_len)
         # Initial the GPIO for M0 and M1 Pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
@@ -177,15 +179,16 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, rec_freq: int, payload):
-        pl = payload.encode()
-        length = len(pl)
+        encoding = self.crc.encode(payload)
+        byte_pl = encoding.encode()
+        length = len(byte_pl)
         data = bytes([address >> 8]) +\
                bytes([address & 0xff]) +\
                bytes([rec_freq]) +\
                bytes([self.addr >> 8]) +\
                bytes([self.addr & 0xff]) +\
                bytes([self.offset_freq]) +\
-               bytes(length) + pl
+               bytes(length) + byte_pl
         self.__raw_send(data)
 
     def send(self, address: int , rec_freq: int, payload):
@@ -199,15 +202,16 @@ class LoRa_socket:
 
 
     def broadcast(self, payload):
-        pl = payload.encode()
-        length = len(pl)
+        encoding = self.crc.encode(payload)
+        byte_pl = encoding.encode()
+        length = len(byte_pl)
         data = bytes([255]) +\
                bytes([255]) +\
                bytes([constants.OFFSET_FREQ]) +\
                bytes([255]) +\
                bytes([255]) +\
                bytes([self.offset_freq]) +\
-               bytes(length) + pl
+               bytes(length) + byte_pl
         self.__raw_send(data)
 
 
@@ -246,6 +250,7 @@ class LoRa_socket:
             freq = r_buff[2] + self.start_freq
             len = r_buff[3]
             msg = self.ser.read(len)
+            decoded_msg = self.crc.decode(msg)
 
             print(
                 "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"
@@ -262,7 +267,7 @@ class LoRa_socket:
             else:
                 pass
                 #print('\x1b[2A',end='\r')
-            return msg
+            return decoded_msg
         else:
             return None
 
