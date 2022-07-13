@@ -31,10 +31,10 @@ class CRC:
         # return r
         return self.key
 
-    def __encode__(self, message):
+    def encode(self, message):
         return message + self.__gen_crc__(message)
 
-    def __decode__(self, message):
+    def decode(self, message):
         recv_message = message[0:len(message) - self.key_len]
         recv_crc = message[len(message) - self.key_len:len(message)]
 
@@ -42,3 +42,4 @@ class CRC:
             return recv_message
 
         raise Exception("Invalid message received")
+
