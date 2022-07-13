@@ -2,11 +2,7 @@ import math
 
 
 class CRC:
-    key = bytearray(0b11111000110010010001010000001010)
-    key_len = math.floor(math.log2(key)) + 1
-
-    def __init__(self, crc_len):
-        self.crc_len = crc_len
+    key = "11111000110010010001010000001010"
 
     def __gen_crc__(self, message):
         # result = ''
@@ -29,17 +25,25 @@ class CRC:
         #             result += '1'
         #             temp = r + message[i]
         # return r
-        return self.key
+        return self.key.encode()
 
-    def encode(self, message):
-        return message + self.__gen_crc__(message)
+    def encode(self, message):  # Message is a string, returns bytes
+        return message.encode() + self.__gen_crc__(message)
 
-    def decode(self, message):
-        recv_message = message[0:len(message) - self.key_len]
-        recv_crc = message[len(message) - self.key_len:len(message)]
+    def decode(self, message):  # Message is bytes, returns a string
+        recv_message = message[0:len(message) - len(self.key)]
+        recv_crc = message[len(message) - len(self.key):len(message)]
 
         if (recv_crc == self.__gen_crc__(recv_message)):
-            return recv_message
+            return recv_message.decode()
 
         raise Exception("Invalid message received")
 
+
+crc = CRC()
+input_message = "GraceIsCute"
+print("Input message: " + input_message)
+encoded_mess = crc.encode(input_message)
+print("Encoded Message:" + str(encoded_mess))
+decoded_mess = crc.decode(encoded_mess)
+print(decoded_mess)
