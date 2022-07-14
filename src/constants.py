@@ -3,6 +3,7 @@ import settings as s
 ### Raspberry Pi Constants ###
 M0 = 22
 M1 = 27
+SERIAL_NUM="/dev/ttyS0"
 
 ### SX 1262 Constants ###
 SX126X_UART_BAUDRATE_1200 = 0x00
@@ -45,7 +46,11 @@ LORA_AIR_SPEED_DIC = {
 AIR_SPEED = LORA_AIR_SPEED_DIC.get(s.AIR_SPEED)
 
 # Transmission Power (10,13,17,22) in dB
-LORA_POWER_DIC = {22: 0x00, 17: 0x01, 13: 0x02, 10: 0x03}
+LORA_POWER_DIC = {
+    22: SX126X_Power_22dBm, 
+    17: SX126X_Power_17dBm, 
+    13: SX126X_Power_13dBm, 
+    10: SX126X_Power_10dBm}
 POWER = LORA_POWER_DIC.get(s.POWER)
 # UART Buffer Size
 LORA_BUF_SZ_DIC = {
