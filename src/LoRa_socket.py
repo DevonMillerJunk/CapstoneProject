@@ -39,7 +39,7 @@ class LoRa_socket:
         self.freq = freq
         self.serial_n = serial_num
         self.power = power
-        self.crc = crc.CRC(self.crc_len)
+        self.crc = crc.CRC()
         # Initial the GPIO for M0 and M1 Pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
