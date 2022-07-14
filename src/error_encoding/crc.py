@@ -1,43 +1,56 @@
 import math
+import string
 
-DEFAULT_KEY = b'11111000110010010001010000001010'
+DEFAULT_KEY: string = '11111000110010010001010000001010'
 
 
 class CRC:
-    def __init__(self, key=DEFAULT_KEY, key_len=0):
-        self.key = key
+    def __init__(self, key: string = DEFAULT_KEY, key_len=0):
+        self.key = str(bin(int(key, base=2))[2:])
         if (key_len <= 0 or key_len > len(key)):
             self.key_len = len(key)
         else:
             self.key_len = key_len
 
-    def __gen_crc__(self, bytes):
-        # result = ''
-        # temp = '0'
-        # r = 0
+    def __xor__(self, a, b):
+        result = []
+        for i in range(len(b)):
+            if a[i] == b[i]:
+                result.append('0')
+            else:
+                result.append('1')
 
-        # for i in range(len(bytes)):
-        #     if int(self.key) > int(temp):
-        #         result += '0'
-        #         temp += bytes[i]
-        #     else:
-        #         r = temp - self.key
-        #         if r == 0:
-        #             temp = bytes[i]
-        #             if (int(result) == 0):
-        #                 result = ''
-        #             result += '1'
-        #         else:
-        #             r = str(r).lstrip('0')
-        #             result += '1'
-        #             temp = r + bytes[i]
-        # return r
-        return self.key[:self.key_len]
+        return ''.join(result)
 
-    def encode(self, message):  # Message is a string, returns bytes
-        return message.encode() + self.__gen_crc__(message)
+    def __toBinary__(self, a: string):
+        l, m = [], []
+        for i in a:
+            l.append(ord(i))
+        for i in l:
+            m.append(str(bin(i)[2:]))
+        return ''.join(m)
 
-    def decode(self, message):  # Message is bytes, returns a string
+    def __gen_crc__(self, bytes: bytes):
+        bytesString = self.__toBinary__(str(bytes))
+        curr_pick = self.key_len
+        input = ''
+        tmp = self.key
+
+        while curr_pick <= len(bytesString):
+            if tmp[0] == '1':
+                input = bytesString
+            else:
+                input = '0' * curr_pick
+            tmp = self.__xor__(input, tmp)
+            if curr_pick < self.key_len:
+                tmp += bytesString[curr_pick]
+            curr_pick += 1
+        return tmp.encode()[:self.key_len]
+
+    def encode(self, message: string):  # Message is a string, returns bytes
+        return message.encode() + self.__gen_crc__(message.encode())
+
+    def decode(self, message: bytes):  # Message is bytes, returns a string
         recv_message = message[0:len(message) - self.key_len]
         recv_crc = message[len(message) - self.key_len:len(message)]
 
@@ -48,7 +61,7 @@ class CRC:
 
 
 # crc = CRC()
-# input_message = "TestTestTestInputMessage"
+# input_message: string = "TestTestTestInputMessage123123123"
 # print("Input message: " + input_message)
 # encoded_mess = crc.encode(input_message)
 # print("Encoded Message:" + str(encoded_mess))
