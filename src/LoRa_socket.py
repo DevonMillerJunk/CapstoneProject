@@ -212,7 +212,7 @@ class LoRa_socket:
                       bytes([255]) +\
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
-                      bytes([length]) + byte_pl
+                      bytes([length]) + encoding
         self.__raw_send(data)
 
 
@@ -228,13 +228,13 @@ class LoRa_socket:
 
     def __send_ack(self):
         self.packet_num +=1
-        data = bytes([self.connected_address >> 8]) +\
+        data: bytes = bytes([self.connected_address >> 8]) +\
                bytes([self.connected_address & 0xff]) +\
                bytes([self.connected_freq]) +\
                bytes([self.addr >> 8]) +\
                bytes([self.addr & 0xff]) +\
                bytes([self.offset_freq]) +\
-               bytes(1) +\
+               bytes([1]) +\
                self.packet_num.encode()
         self.__raw_send(data)
 
@@ -296,9 +296,9 @@ class LoRa_socket:
 
     def accept(self):
         listen = self.__receive()
-	resp = listen.split(",")
-        self.connected_address = listen[0]
-        self.connected_freq = listen[1]
+        resp = listen.split(",")
+        self.connected_address = resp[0]
+        self.connected_freq = resp[1]
         payload: str = self.addr + "," + self.offset_freq
         self.__send_packet(self.connected_address, self.connected_freq, payload)
         print("accepted connection request from" + self.connected_address + ", " + self.connected_freq)
