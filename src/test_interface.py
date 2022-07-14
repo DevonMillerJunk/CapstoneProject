@@ -40,7 +40,7 @@ node = LoRa_socket.LoRa_socket()
 def send_deal():
     get_rec = ""
     print("")
-    print("input a string such as \033[1;32m0,915,Hello World\033[0m,it will send `Hello World` to lora node device of address 0 with 915M ")
+    print("input a string such as `Hello World` it will send `Hello World` to the connected lora node")
     print("please input and press Enter key:", end='', flush=True)
 
     while True:
@@ -51,15 +51,13 @@ def send_deal():
             sys.stdout.write(rec)
             sys.stdout.flush()
 
-    get_t = get_rec.split(",")
+    get_t = get_rec
     # the data format is as follows
     # "node address,frequency,payload"
     #  e.g. "20,868,Hello World"
-    address = int(get_t[0])
-    offset_frequency = int(get_t[1]) - (850 if int(get_t[1]) > 850 else 410)
-    payload = get_t[2]
+    payload = get_t
 
-    node.send_msg(address, offset_frequency, payload)
+    node.send(payload)
     print('\x1b[2A', end='\r')
     print(" " * 200)
     print(" " * 200)
@@ -98,8 +96,10 @@ try:
     seconds = 10
 
     if TX:
+        print("attempting to establish connection, broadcasting to nearby nodes")
         node.connect()
     else:
+        print("attempting to establish connection, listening for nearby nodes")
         node.accept()
 
     while True:
