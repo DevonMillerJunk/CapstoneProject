@@ -205,6 +205,7 @@ class LoRa_socket:
 
 
     def broadcast(self, payload):
+        print("c")
         encoding = self.crc.encode(payload)
         byte_pl = encoding.encode()
         length = len(byte_pl)
@@ -282,13 +283,15 @@ class LoRa_socket:
     def connect(self):
         retries = 0
         response = None
-        while not response and retries <= 10:
+        print("a")
+        while response is None and retries <= 10:
+            print("b")
             payload = str(self.addr + "," + self.offset_freq)
             self.broadcast(payload)
             response = tuple(self.__receive())
             if not response:
                 retries +=1
-        if response:
+        if response is not None:
             self.connected_address = response[0]
             self.connected_freq = response[1]
             print("connected to" + self.connected_address + ", " + self.connected_freq)
