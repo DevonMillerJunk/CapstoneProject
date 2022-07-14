@@ -1,0 +1,7 @@
+Address,Frequency,Message,String Message,Packet RSSI,Channel RSSI
+128,915,b'HydroBits\xad\x00\x80AHydroBits',b'HydroBits\xad\x00\x80AHydroBits',-87,-85
+128,915,b'HydroBits\xab\x00\x80AHydroBits\x00\x00A\x00\x80AHydroBits',b'HydroBits\xab\x00\x80AHydroBits\x00\x00A\x00\x80AHydroBits',-83,-83
+128,915,b'HydroBits\x00\x00A\x00\x80AHydroBits\xa0\x00\x80AHydroBits',b'HydroBits\x00\x00A\x00\x80AHydroBits\xa0\x00\x80AHydroBits',-95,-91
+128,915,b'HydroBits\x00\x00A\x00\x80AHydroBits\xa5\x00\x80AHydroBits',b'HydroBits\x00\x00A\x00\x80AHydroBits\xa5\x00\x80AHydroBits',-91
+128,915,b'HydroBits\xa8\x00\x80AHydroBits',b'HydroBits\xa8\x00\x80AHydroBits',-84
+128,915,b'HydroBits\xa4\x00\x80AHydroBits\x00\x00A\x00\x80AHydroBits',b'HydroBits\xa4\x00\x80AHydroBits\x00\x00A\x00\x80AHydroBits',-94,-88
