@@ -35,7 +35,7 @@ def get_cpu_temp():
     tempFile.close()
     return float(cpu_temp) / 1000
 
-node = LoRa_socket.LoRa_socket()
+node = LoRa_socket.LoRa_socket(addr=64)
 
 def send_deal():
     get_rec = ""
@@ -97,6 +97,7 @@ try:
 
     if TX:
         print("attempting to establish connection, broadcasting to nearby nodes")
+        node.send(0,65,"sending")
         node.connect()
     else:
         print("attempting to establish connection, listening for nearby nodes")

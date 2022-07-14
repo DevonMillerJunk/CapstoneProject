@@ -4,8 +4,7 @@ import RPi.GPIO as GPIO
 import serial
 import time
 import constants
-import error_encoding.crc as crc   
-
+import error_encoding.crc as crc
 
 class LoRa_socket:
 
@@ -178,44 +177,42 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, rec_freq: int, payload):
-        encoding = self.crc.encode(payload)
-        byte_pl = encoding.encode()
-        length = len(byte_pl)
-        data = bytes([address >> 8]) +\
-               bytes([address & 0xff]) +\
-               bytes([rec_freq]) +\
-               bytes([self.addr >> 8]) +\
-               bytes([self.addr & 0xff]) +\
-               bytes([self.offset_freq]) +\
-               bytes(length) + byte_pl
+        encoding: bytes = self.crc.encode(payload)
+        length = len(encoding)
+        data: bytes = bytes([address >> 8]) +\
+                      bytes([address & 0xff]) +\
+                      bytes([self.offset_freq]) +\
+                      bytes([self.addr >> 8]) +\
+                      bytes([self.addr & 0xff]) +\
+                      bytes([self.offset_freq]) +\
+                      bytes([length]) + encoding
         self.__raw_send(data)
 
     def send(self, address: int , rec_freq: int, payload):
         retries = 0
         response = None
-        while not response and retries <= 3:
+        while response is None and retries <= 10:
+            print("start")
             self.__send_packet(address, rec_freq, payload)
-            response = tuple(self.__receive())
+            response = self.__receive()
             if not response:
                 retries +=1
-        if response:
+        if response is not None:
             self.packet_num = int(response)
         else:
             print("packet delivery failed for " + self.packet_num)
 
 
     def broadcast(self, payload):
-        print("c")
-        encoding = self.crc.encode(payload)
-        byte_pl = encoding.encode()
-        length = len(byte_pl)
-        data = bytes([255]) +\
-               bytes([255]) +\
-               bytes([constants.OFFSET_FREQ]) +\
-               bytes([255]) +\
-               bytes([255]) +\
-               bytes([self.offset_freq]) +\
-               bytes(length) + byte_pl
+        encoding: bytes = self.crc.encode(payload)
+        length = len(encoding)
+        data: bytes = bytes([255]) +\
+                      bytes([255]) +\
+                      bytes([self.offset_freq]) +\
+                      bytes([255]) +\
+                      bytes([255]) +\
+                      bytes([self.offset_freq]) +\
+                      bytes([length]) + byte_pl
         self.__raw_send(data)
 
 
@@ -247,6 +244,7 @@ class LoRa_socket:
         while self.ser.inWaiting() <= 0 and timeout < 1:
             time.sleep(0.1)
             timeout += 0.1
+            print("waiting")
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff = self.ser.read(4)
@@ -254,7 +252,7 @@ class LoRa_socket:
             freq = r_buff[2] + self.start_freq
             len = r_buff[3]
             msg = self.ser.read(len)
-            decoded_msg = self.crc.decode(msg)
+            #decoded_msg = self.crc.decode(msg)
 
             print(
                 "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"
@@ -271,7 +269,7 @@ class LoRa_socket:
             else:
                 pass
                 #print('\x1b[2A',end='\r')
-            return decoded_msg
+            return msg
         else:
             return None
 
@@ -283,12 +281,10 @@ class LoRa_socket:
     def connect(self):
         retries = 0
         response = None
-        print("a")
         while response is None and retries <= 10:
-            print("b")
-            payload = str(self.addr + "," + self.offset_freq)
+            payload: str = self.addr + "," + self.offset_freq 
             self.broadcast(payload)
-            response = tuple(self.__receive())
+            response = self.__receive()
             if not response:
                 retries +=1
         if response is not None:
@@ -299,10 +295,11 @@ class LoRa_socket:
             print("connection attempt failed")
 
     def accept(self):
-        listen = tuple(self.__receive())
+        listen = self.__receive()
+	resp = listen.split(",")
         self.connected_address = listen[0]
         self.connected_freq = listen[1]
-        payload = (self.addr, self.offset_freq)
+        payload: str = self.addr + "," + self.offset_freq
         self.__send_packet(self.connected_address, self.connected_freq, payload)
         print("accepted connection request from" + self.connected_address + ", " + self.connected_freq)
 
