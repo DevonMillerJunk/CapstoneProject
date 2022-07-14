@@ -274,10 +274,10 @@ class sx126x:
             if self.rssi:
                 # print('\x1b[3A',end='\r')
                 print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
-                rx_values.append(256 - r_buff[-1:][0])
+                rx_values.append((256 - r_buff[-1:][0])*-1)
                 chan_rssi = self.get_channel_rssi()
                 if chan_rssi:
-                    rx_values.append(chan_rssi)
+                    rx_values.append(chan_rssi*-1)
             else:
                 pass
                 #print('\x1b[2A',end='\r')
