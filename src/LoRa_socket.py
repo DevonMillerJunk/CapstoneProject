@@ -192,12 +192,16 @@ class LoRa_socket:
 
     def send(self, address: int , rec_freq: int, payload):
         retries = 0
+        response = None
         while not response and retries <= 3:
             self.__send_packet(address, rec_freq, payload)
             response = tuple(self.__receive())
             if not response:
                 retries +=1
-        self.packet_num = int(response)
+        if response:
+            self.packet_num = int(response)
+        else:
+            print("packet delivery failed for " + self.packet_num)
 
 
     def broadcast(self, payload):
@@ -277,15 +281,19 @@ class LoRa_socket:
 
     def connect(self):
         retries = 0
-        while not response and retries <= 3:
-            payload = (self.addr, self.offset_freq)
+        response = None
+        while not response and retries <= 10:
+            payload = str(self.addr + "," + self.offset_freq)
             self.broadcast(payload)
             response = tuple(self.__receive())
             if not response:
                 retries +=1
-        self.connected_address = response[0]
-        self.connected_freq = response[1]
-        print("connected to" + self.connected_address + ", " + self.connected_freq)
+        if response:
+            self.connected_address = response[0]
+            self.connected_freq = response[1]
+            print("connected to" + self.connected_address + ", " + self.connected_freq)
+        else:
+            print("connection attempt failed")
 
     def accept(self):
         listen = tuple(self.__receive())
