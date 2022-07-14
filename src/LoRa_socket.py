@@ -1,6 +1,5 @@
 # This file is used for LoRa and Raspberry pi4B related issues
 
-from numpy import broadcast
 import RPi.GPIO as GPIO
 import serial
 import time
