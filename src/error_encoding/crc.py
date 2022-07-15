@@ -30,6 +30,18 @@ class CRC:
             m.append(str(bin(i)[2:]))
         return ''.join(m)
 
+    def __toBytes__(self, a: string):
+        print("Input to toBytes: " + a)
+        result = bytes([int(a[0:8], base=2)])
+        for i in range(8, len(a), 8):
+            print("Converted: " + a[i:i + 8] + " to " +
+                  str(int(a[i:i + 8], base=2).to_bytes(1, 'little')))
+            result += bytes([int(a[i:i + 8], base=2)])
+        print("To bytes result: " + str(result))
+        # 00111101111101000101100010110110
+        # 3DF458B6
+        return result
+
     def __gen_crc__(self, bytes: bytes):
         bytesString = self.__toBinary__(str(bytes))
         curr_pick = self.key_len
@@ -45,7 +57,7 @@ class CRC:
             if curr_pick < self.key_len:
                 tmp += bytesString[curr_pick]
             curr_pick += 1
-        return tmp.encode()[:self.key_len]
+        return self.__toBytes__(tmp)[:self.key_len]
 
     def encode(self, message: string):  # Message is a string, returns bytes
         return message.encode() + self.__gen_crc__(message.encode())
