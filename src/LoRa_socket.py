@@ -244,21 +244,23 @@ class LoRa_socket:
                 curr_time += 0.1
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
+            print("RECEIVED A MESSAGE")
             r_buff = self.ser.read(self.ser.inWaiting())
+            print("Message Received: " + str(r_buff))
             address = (r_buff[0] << 8) + r_buff[1]
             freq = r_buff[2] + self.start_freq
             len = r_buff[3]
             msg = r_buff[4:math.min(
                 len(r_buff),
                 len)]  #Note: should change to be a wait for the len to arrive
-            decoded_msg = self.crc.decode(bytes(msg))
+            #decoded_msg = self.crc.decode(bytes(msg))
 
             print(
                 "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"
                 % (address, freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + decoded_msg, end='\r\n')
+            print("message is " + str(msg), end='\r\n')
 
             # print the rssi
             if self.rssi:
