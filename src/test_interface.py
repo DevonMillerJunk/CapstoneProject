@@ -28,6 +28,7 @@ tty.setcbreak(sys.stdin.fileno())
 
 TX = True
 
+
 #    The following is to obtain the temprature of the RPi CPU
 def get_cpu_temp():
     tempFile = open("/sys/class/thermal/thermal_zone0/temp")
@@ -35,12 +36,19 @@ def get_cpu_temp():
     tempFile.close()
     return float(cpu_temp) / 1000
 
-node = LoRa_socket.LoRa_socket(addr=64)
+
+node_address = 64
+if TX == False:
+    node_address = 0
+node = LoRa_socket.LoRa_socket(addr=node_address)
+
 
 def send_deal():
     get_rec = ""
     print("")
-    print("input a string such as `Hello World` it will send `Hello World` to the connected lora node")
+    print(
+        "input a string such as `Hello World` it will send `Hello World` to the connected lora node"
+    )
     print("please input and press Enter key:", end='', flush=True)
 
     while True:
@@ -86,18 +94,21 @@ def send_cpu_continue(continue_or_not=True):
         timer_task.cancel()
         pass
 
+
 try:
     time.sleep(1)
     print("Press \033[1;32mEsc\033[0m to exit")
     print("Press \033[1;32mi\033[0m   to send")
-    print("Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
+    print(
+        "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
 
     if TX:
-        print("attempting to establish connection, broadcasting to nearby nodes")
-        node.send(0,65,"sending")
+        print(
+            "attempting to establish connection, broadcasting to nearby nodes")
+        node.send(0, 65, "sending")
         node.connect()
     else:
         print("attempting to establish connection, listening for nearby nodes")

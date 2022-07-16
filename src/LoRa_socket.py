@@ -56,8 +56,8 @@ class LoRa_socket:
                  crypt, relay, lbt, wor)
 
 
-    def set(self,freq,addr,power,rssi,air_speed=2400,\
-            net_id=0,buffer_size = 240,crypt=0,\
+    def set(self,freq,addr,power,rssi,air_speed,\
+            net_id=0,buffer_size=constants.BUF_SZ,crypt=0,\
             relay=False,lbt=False,wor=False):
         self.send_to = addr
         self.addr = addr
@@ -78,10 +78,6 @@ class LoRa_socket:
             self.start_freq = 410
             self.offset_freq = freq_temp
 
-        air_speed_temp = constants.AIR_SPEED
-        buffer_size_temp = constants.BUF_SZ
-        power_temp = constants.POWER
-
         if rssi:
             rssi_temp = 0x80
         else:
@@ -95,9 +91,8 @@ class LoRa_socket:
             self.cfg_reg[3] = high_addr
             self.cfg_reg[4] = low_addr
             self.cfg_reg[5] = net_id_temp
-            self.cfg_reg[
-                6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed_temp
-            self.cfg_reg[7] = buffer_size_temp + power_temp + 0x20
+            self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
+            self.cfg_reg[7] = buffer_size + power + 0x20
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x43 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -106,9 +101,8 @@ class LoRa_socket:
             self.cfg_reg[3] = 0x01
             self.cfg_reg[4] = 0x02
             self.cfg_reg[5] = 0x03
-            self.cfg_reg[
-                6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed_temp
-            self.cfg_reg[7] = buffer_size_temp + power_temp + 0x20
+            self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
+            self.cfg_reg[7] = buffer_size + power + 0x20
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x03 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -303,7 +297,7 @@ class LoRa_socket:
 
     def accept(self):
         listen = None
-        while list == None:
+        while listen == None:
             listen = self.__receive()
         resp = listen.split(",")
         self.connected_address = resp[0]
