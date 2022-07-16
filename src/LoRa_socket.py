@@ -242,18 +242,21 @@ class LoRa_socket:
         self.__raw_send(data)
 
     def __receive(self, timeout: float = 1):
-        curr_time: float = 0
-        print("waiting")
-        while self.ser.inWaiting() <= 0 and curr_time < timeout:
-            time.sleep(0.1)
-            curr_time += 0.1
+        if (timeout > 0):
+            curr_time: float = 0
+            print("waiting")
+            while self.ser.inWaiting() <= 0 and curr_time < timeout:
+                time.sleep(0.1)
+                curr_time += 0.1
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff = self.ser.read(self.ser.inWaiting())
             address = (r_buff[0] << 8) + r_buff[1]
             freq = r_buff[2] + self.start_freq
             len = r_buff[3]
-            msg = r_buff[4:math.min(len(r_buff), len)]
+            msg = r_buff[4:math.min(
+                len(r_buff),
+                len)]  #Note: should change to be a wait for the len to arrive
             decoded_msg = self.crc.decode(bytes(msg))
 
             print(
@@ -301,7 +304,7 @@ class LoRa_socket:
     def accept(self):
         listen = None
         while list == None:
-            listen = self.__receive(10)
+            listen = self.__receive()
         resp = listen.split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
