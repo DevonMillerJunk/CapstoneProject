@@ -108,7 +108,7 @@ try:
     if TX:
         print(
             "attempting to establish connection, broadcasting to nearby nodes")
-        #node.send(0, 65, "sending")
+        node.send(0, 65, "sending")
         node.connect()
     else:
         print("attempting to establish connection, listening for nearby nodes")
