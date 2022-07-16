@@ -243,10 +243,10 @@ class LoRa_socket:
 
     def __receive(self, timeout: float = 1):
         curr_time: float = 0
+        print("waiting")
         while self.ser.inWaiting() <= 0 and curr_time < timeout:
             time.sleep(0.1)
             curr_time += 0.1
-            print("waiting")
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff = self.ser.read(self.ser.inWaiting())
@@ -299,7 +299,9 @@ class LoRa_socket:
             print("connection attempt failed")
 
     def accept(self):
-        listen = self.__receive()
+        listen = None
+        while list == None:
+            listen = self.__receive(10)
         resp = listen.split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
