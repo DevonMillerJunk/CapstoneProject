@@ -1,5 +1,6 @@
 # This file is used for LoRa and Raspberry pi4B related issues
 
+import math
 import RPi.GPIO as GPIO
 import serial
 import time
@@ -248,11 +249,11 @@ class LoRa_socket:
             print("waiting")
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
-            r_buff = self.ser.read(4)
+            r_buff = self.ser.read(self.ser.inWaiting())
             address = (r_buff[0] << 8) + r_buff[1]
             freq = r_buff[2] + self.start_freq
             len = r_buff[3]
-            msg = self.ser.read(len)
+            msg = r_buff[4:math.min(len(r_buff), len)]
             decoded_msg = self.crc.decode(bytes(msg))
 
             print(
