@@ -249,7 +249,7 @@ class LoRa_socket:
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
-            address = r_buff[0:2]
+            address = int.from_bytes(r_buff[0:2], "big")
             freq = r_buff[2] + self.start_freq
             msg_len = r_buff[3]
             msg = r_buff[4:min(
