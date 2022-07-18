@@ -264,6 +264,9 @@ class LoRa_socket:
                 flush=True)
             print("message is " + msg.decode(), end='\r\n')
 
+            self.connected_address = address
+            self.connected_freq = freq
+
             # print the rssi
             if self.rssi:
                 # print('\x1b[3A',end='\r')
