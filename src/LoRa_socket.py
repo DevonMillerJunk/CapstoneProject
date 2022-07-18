@@ -196,7 +196,7 @@ class LoRa_socket:
         response = None
         while response is None and retries <= 10:
             self.__send_packet(address, rec_freq, payload)
-            response = self.__receive(10)
+            (response, _, _) = self.__receive(10)
             if not response:
                 retries += 1
         if response is not None:
@@ -270,7 +270,7 @@ class LoRa_socket:
                 #print('\x1b[2A',end='\r')
             return (msg, address, freq)
         else:
-            return None
+            return (None, None, None)
 
     def recv(self, timeout: float = 1):
         (res, addr, freq) = self.__receive(timeout)
@@ -288,12 +288,12 @@ class LoRa_socket:
         payload: str = self.addr + "," + self.offset_freq
         while response is None and curr_time < retryTimeout:
             self.broadcast(payload)
-            response = self.__receive(retryPeriod)
+            (response, addr, freq) = self.__receive(retryPeriod)
             if not response:
                 retries += 1
         if response is not None:
-            self.connected_address = response[0]
-            self.connected_freq = response[1]
+            self.connected_address = addr
+            self.connected_freq = freq
             print("connected to" + self.connected_address + ", " +
                   self.connected_freq)
         else:
@@ -302,7 +302,7 @@ class LoRa_socket:
     def accept(self):
         listen = None
         while listen == None:
-            listen = self.__receive()
+            (listen, _, _) = self.__receive()
         resp = listen.split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
