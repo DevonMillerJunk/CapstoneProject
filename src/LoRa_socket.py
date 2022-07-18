@@ -173,7 +173,7 @@ class LoRa_socket:
         return bytes([address >> 8]) + bytes([address & 0xff])
 
     def __encode_data__(self, payload: str) -> bytes:
-        encoding: bytes = payload
+        encoding: bytes = payload.encode()
         length = len(encoding)
         return bytes([length]) + encoding
 

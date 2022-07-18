@@ -94,22 +94,13 @@ try:
         #     "attempting to establish connection, broadcasting to nearby nodes")
         # node.connect()
         while True:
-            print("Press \033[1;32mc\033[0m   to exit the send task")
-            timer_task = Timer(seconds, send_cpu_continue)
-            timer_task.start()
-
-            while True:
-                if sys.stdin.read(1) == '\x63':
-                    timer_task.cancel()
-                    print('\x1b[1A', end='\r')
-                    print(" " * 100)
-                    print('\x1b[1A', end='\r')
-                    break
+            send_cpu_continue()
+            time.sleep(5)
     else:
         print("attempting to establish connection, listening for nearby nodes")
         #node.accept()
         while True:
-            node.recv(0)
+            node.__receive(0)
 
 except:
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
