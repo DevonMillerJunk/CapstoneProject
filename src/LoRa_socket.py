@@ -247,11 +247,11 @@ class LoRa_socket:
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
             print("Message Received: " + u.formatBytes(r_buff))
             address = int.from_bytes(r_buff[0:2], 'little')
-            print("Address: " + address)
+            print("Address: " + str(address))
             freq = int.from_bytes(r_buff[2], 'little') + self.start_freq
-            print("Freq: " + freq)
+            print("Freq: " + str(freq))
             len = int.from_bytes(r_buff[3], 'little')
-            print("Length: " + len)
+            print("Length: " + str(len))
             msg = r_buff[4:math.min(
                 len(r_buff),
                 len)]  #Note: should change to be a wait for the len to arrive
