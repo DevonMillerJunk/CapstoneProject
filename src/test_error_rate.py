@@ -27,7 +27,7 @@ import util as u
 old_settings = termios.tcgetattr(sys.stdin)
 tty.setcbreak(sys.stdin.fileno())
 
-RX_addr = 0
+RX_addr = 65
 TX_addr = 64
 
 TX = True
