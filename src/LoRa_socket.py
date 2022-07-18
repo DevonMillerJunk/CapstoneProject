@@ -206,7 +206,7 @@ class LoRa_socket:
             self.packet_num = int(response)
             print("Response received!!!!")
         else:
-            print("packet delivery failed for " + self.packet_num)
+            print("packet delivery failed for " + str(self.packet_num))
 
     def broadcast(self, payload):
         data: bytes = bytes([255]) +\
@@ -249,7 +249,7 @@ class LoRa_socket:
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
-            address = r_buff[0] << 8 + r_buff[1]
+            address = r_buff[0:2]
             freq = r_buff[2] + self.start_freq
             msg_len = r_buff[3]
             msg = r_buff[4:min(
