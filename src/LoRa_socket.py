@@ -193,10 +193,12 @@ class LoRa_socket:
         retries = 0
         response = None
         while response is None and retries <= 10:
-            print("start")
+            print("Testing send:")
             self.__send_packet(address, rec_freq, payload)
-            response = self.__receive(5)
+            response = self.__receive(10)
             if not response:
+                print("Have not received a response with " + str(retries) +
+                      " retries")
                 retries += 1
         if response is not None:
             self.packet_num = int(response)
@@ -225,7 +227,8 @@ class LoRa_socket:
         time.sleep(0.1)
 
     def __send_ack(self):
-        print("Sending Ack:")
+        print("Sending Ack to address:" + str(self.connected_address) +
+              " and freq: " + str(self.connected_freq))
         self.packet_num += 1
         data: bytes = self.__format_addr__(self.connected_address) +\
                bytes([self.connected_freq]) +\
