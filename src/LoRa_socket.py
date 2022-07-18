@@ -6,6 +6,7 @@ import serial
 import time
 import constants
 import error_encoding.crc as crc
+import util as u
 
 
 class LoRa_socket:
@@ -243,11 +244,14 @@ class LoRa_socket:
                 curr_time += check_period
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
-            r_buff = self.ser.read(self.ser.inWaiting())
-            print("Message Received: " + str(r_buff))
-            address = (r_buff[0] << 8) + r_buff[1]
-            freq = r_buff[2] + self.start_freq
-            len = r_buff[3]
+            r_buff: bytes = self.ser.read(self.ser.inWaiting())
+            print("Message Received: " + u.formatBytes(r_buff))
+            address = int.from_bytes(r_buff[0:2])
+            print("Address: " + address)
+            freq = int.from_bytes(r_buff[2]) + self.start_freq
+            print("Freq: " + freq)
+            len = int.from_bytes(r_buff[3])
+            print("Length: " + len)
             msg = r_buff[4:math.min(
                 len(r_buff),
                 len)]  #Note: should change to be a wait for the len to arrive
@@ -258,7 +262,7 @@ class LoRa_socket:
                 % (address, freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + str(msg), end='\r\n')
+            print("message is " + msg.decode(), end='\r\n')
 
             # print the rssi
             if self.rssi:
