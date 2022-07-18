@@ -225,13 +225,11 @@ class LoRa_socket:
         time.sleep(0.1)
 
     def __send_ack(self):
+        print("Sending Ack:")
         self.packet_num += 1
-        data: bytes = self.__gen_header__(self.connected_address)
-        data: bytes = bytes([self.connected_address >> 8]) +\
-               bytes([self.connected_address & 0xff]) +\
+        data: bytes = self.__format_addr__(self.connected_address) +\
                bytes([self.connected_freq]) +\
-               bytes([self.addr >> 8]) +\
-               bytes([self.addr & 0xff]) +\
+               self.__format_addr__(self.addr) +\
                bytes([self.offset_freq]) +\
                self.__encode_data__(str(self.packet_num))
         self.__raw_send(data)
