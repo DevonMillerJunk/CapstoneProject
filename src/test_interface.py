@@ -100,7 +100,7 @@ try:
         print("attempting to establish connection, listening for nearby nodes")
         #node.accept()
         while True:
-            node.__receive(0)
+            node.accept()
 
 except:
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
