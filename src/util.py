@@ -1,6 +1,6 @@
 from bitarray import bitarray
 import binascii
-
+import csv
 
 def BER(input1: bytes, input2: bytes) -> float:
     array1 = bitarray()
@@ -17,3 +17,13 @@ def BER(input1: bytes, input2: bytes) -> float:
 
 def formatBytes(input: bytes) -> str:
     return str(binascii.hexlify(bytearray(input)))
+
+def createOutputCSV (file_path: str, header: str) -> None:
+    with open(file_path, "w", encoding="UTF8") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+def writeRXValuestoCSV(file_string, rec_values):
+    with open(file_string, 'a', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(rec_values)
