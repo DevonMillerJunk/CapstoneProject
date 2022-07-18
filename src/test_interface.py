@@ -73,26 +73,10 @@ def send_deal():
     print('\x1b[3A', end='\r')
 
 
-def send_cpu_continue(continue_or_not=True):
-    if continue_or_not:
-        global timer_task
-        global seconds
-        #
-        # broadcast the cpu temperature at 915MHz
-        #
-        offset_freq = 915 - 850
-        data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
-        node.broadcast(data)
-        time.sleep(0.2)
-        timer_task = Timer(seconds, send_cpu_continue)
-        timer_task.start()
-    else:
-        offset_freq = 915 - 850
-        data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
-        node.send(data)
-        time.sleep(0.2)
-        timer_task.cancel()
-        pass
+def send_cpu_continue():
+    data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
+    node.send(0, 0, data)
+    time.sleep(0.2)
 
 
 try:
@@ -106,9 +90,9 @@ try:
     seconds = 10
 
     if TX:
-        print(
-            "attempting to establish connection, broadcasting to nearby nodes")
-        node.connect()
+        # print(
+        #     "attempting to establish connection, broadcasting to nearby nodes")
+        # node.connect()
         while True:
             print("Press \033[1;32mc\033[0m   to exit the send task")
             timer_task = Timer(seconds, send_cpu_continue)
@@ -123,9 +107,9 @@ try:
                     break
     else:
         print("attempting to establish connection, listening for nearby nodes")
-        node.accept()
+        #node.accept()
         while True:
-            node.recv()
+            node.recv(0)
 
 except:
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
