@@ -173,7 +173,7 @@ class LoRa_socket:
         return bytes([address >> 8]) + bytes([address & 0xff])
 
     def __encode_data__(self, payload: str) -> bytes:
-        encoding: bytes = self.crc.encode(payload)
+        encoding: bytes = payload
         length = len(encoding)
         return bytes([length]) + encoding
 
@@ -210,7 +210,7 @@ class LoRa_socket:
                       bytes([255]) +\
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
-                      self.__encode_data__(payload)
+                      payload
         self.__raw_send(data)
 
     def __raw_send(self, data):
@@ -236,15 +236,14 @@ class LoRa_socket:
         self.__raw_send(data)
 
     def __receive(self, timeout: float = 1):
+        check_period = 0.01
         if (timeout > 0):
             curr_time: float = 0
-            print("waiting")
             while self.ser.inWaiting() <= 0 and curr_time < timeout:
-                time.sleep(0.1)
-                curr_time += 0.1
+                time.sleep(check_period)
+                curr_time += check_period
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
-            print("RECEIVED A MESSAGE")
             r_buff = self.ser.read(self.ser.inWaiting())
             print("Message Received: " + str(r_buff))
             address = (r_buff[0] << 8) + r_buff[1]
@@ -281,12 +280,14 @@ class LoRa_socket:
         return res
 
     def connect(self):
-        retries = 0
+        retryTimeout = 10  #seconds
+        retryPeriod = 0.1  #seconds
+        curr_time = 0
         response = None
-        while response is None and retries <= 10:
-            payload: str = self.addr + "," + self.offset_freq
+        payload: str = self.addr + "," + self.offset_freq
+        while response is None and curr_time < retryTimeout:
             self.broadcast(payload)
-            response = self.__receive()
+            response = self.__receive(retryPeriod)
             if not response:
                 retries += 1
         if response is not None:
