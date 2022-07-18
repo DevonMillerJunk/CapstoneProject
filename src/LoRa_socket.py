@@ -195,11 +195,12 @@ class LoRa_socket:
         while response is None and retries <= 10:
             print("start")
             self.__send_packet(address, rec_freq, payload)
-            response = self.__receive()
+            response = self.__receive(5)
             if not response:
                 retries += 1
         if response is not None:
             self.packet_num = int(response)
+            print("Response received!!!!")
         else:
             print("packet delivery failed for " + self.packet_num)
 
@@ -274,9 +275,10 @@ class LoRa_socket:
         else:
             return None
 
-    def recv(self):
-        res = self.__receive()
-        self.__send_ack()
+    def recv(self, timeout: float = 1):
+        res = self.__receive(timeout)
+        if (res != None):
+            self.__send_ack()
         return res
 
     def connect(self):
