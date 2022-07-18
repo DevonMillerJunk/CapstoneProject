@@ -1,69 +1,53 @@
-import math
-import string
+from bitarray import bitarray
+import binascii
 
-DEFAULT_KEY: string = '11111000110010010001010000001010'
+DEFAULT_KEY: bytes = b'\xf8\xc9\x14\x0a'
 
 
 class CRC:
-    def __init__(self, key: string = DEFAULT_KEY, key_len=0):
-        self.key = str(bin(int(key, base=2))[2:])
-        if (key_len <= 0 or key_len > len(key)):
-            self.key_len = len(key)
+    def __init__(self, key: bytes = DEFAULT_KEY, key_len=0):
+        self.key = bitarray()
+        self.key.frombytes(key)
+        if (key_len <= 0 or key_len > len(self.key)):
+            self.key_len = len(self.key)
         else:
             self.key_len = key_len
 
-    def __xor__(self, a, b):
-        result = []
-        for i in range(len(b)):
-            if a[i] == b[i]:
-                result.append('0')
-            else:
-                result.append('1')
+    def __bitarrayString__(self, bits: bitarray) -> str:
+        return str(binascii.hexlify(bytearray(bits.tobytes())))
 
-        return ''.join(result)
-
-    def __toBinary__(self, a: string):
-        l, m = [], []
-        for i in a:
-            l.append(ord(i))
-        for i in l:
-            m.append(str(bin(i)[2:]))
-        return ''.join(m)
-
-    def __gen_crc__(self, bytes: bytes):
-        bytesString = self.__toBinary__(str(bytes))
+    def __gen_crc__(self, bits) -> bytes:
         curr_pick = self.key_len
-        input = ''
-        tmp = self.key
-
-        while curr_pick <= len(bytesString):
-            if tmp[0] == '1':
-                input = bytesString
+        input = bitarray()
+        tmp = self.key.copy()
+        while curr_pick <= len(bits):
+            if tmp[0] == 1:
+                input = bits[0:curr_pick]
             else:
-                input = '0' * curr_pick
-            tmp = self.__xor__(input, tmp)
-            if curr_pick < self.key_len:
-                tmp += bytesString[curr_pick]
+                input = bitarray(curr_pick).setall(0)
+            tmp ^= input
+            if curr_pick < len(bits):
+                tmp.append(bits[curr_pick])
             curr_pick += 1
-        return tmp.encode()[:self.key_len]
+        return tmp[:self.key_len].tobytes()
 
-    def encode(self, message: string):  # Message is a string, returns bytes
-        return message.encode() + self.__gen_crc__(message.encode())
+    def encode(self, message: str) -> bytes:
+        encodedMessage = message.encode()
+        bits = bitarray()
+        bits.frombytes(encodedMessage)
+        return encodedMessage + self.__gen_crc__(bits)
 
-    def decode(self, message: bytes):  # Message is bytes, returns a string
-        recv_message = message[0:len(message) - self.key_len]
-        recv_crc = message[len(message) - self.key_len:len(message)]
-
+    def decode(self, message: bytes) -> str:
+        bits = bitarray()
+        bits.frombytes(message)
+        recv_message = bits[0:len(bits) - self.key_len]
+        recv_crc = bits[len(bits) - self.key_len:len(bits)].tobytes()
         if (recv_crc == self.__gen_crc__(recv_message)):
-            return recv_message.decode()
-
+            return recv_message.tobytes().decode()
         raise Exception("Invalid message received")
 
 
 # crc = CRC()
-# input_message: string = "TestTestTestInputMessage123123123"
-# print("Input message: " + input_message)
-# encoded_mess = crc.encode(input_message)
-# print("Encoded Message:" + str(encoded_mess))
-# decoded_mess = crc.decode(encoded_mess)
-# print(decoded_mess)
+# input_message: str = "TestSendingARandomMessageToEnsureTheCrcIsWorking"
+# print("Successful?: " +
+#       str(crc.decode(crc.encode(input_message)) == input_message))
