@@ -51,7 +51,7 @@ try:
     print("Press \033[1;32mEsc\033[0m to exit")
 
     if TX:
-        print("Sending Sample string every 10 seconds")
+        print("Sending Sample string every " + str(period) + " seconds")
         while True:
             node.send(RX_addr, 0, sampleString)
             time.sleep(period)
