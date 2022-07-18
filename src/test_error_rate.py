@@ -57,9 +57,9 @@ try:
             time.sleep(period)
     else:
         messages_received = 0
-        correct_messages_received = 0
+        incorrect_messages_received = 0
         bits_received = 0
-        correct_bits_received = 0
+        incorrect_bits_received = 0
 
         print("Listening for Messages:")
         while True:
@@ -70,16 +70,17 @@ try:
                  correct_bits_recv) = u.BER(sampleString.encode(),
                                             message.encode())
                 if (bits_recv == correct_bits_recv):
-                    correct_messages_received += 1
+                    incorrect_messages_received += 1
                 bits_received += bits_recv
-                correct_bits_received += correct_bits_recv
+                incorrect_bits_received += correct_bits_recv
 
-                print("Received Message with BER: " + str(curr_BER) +
-                      " Overall BER: " +
-                      str(float(correct_bits_received) /
-                          float(bits_received)) + " Overall FER: " + str(
-                              float(correct_messages_received) /
-                              float(messages_received)))
+                print(
+                    "Received Message with BER: " + str(curr_BER) +
+                    " Overall BER: " +
+                    str(float(incorrect_bits_received) /
+                        float(bits_received)) + " Overall FER: " + str(
+                            float(incorrect_messages_received) /
+                            float(messages_received)))
             else:
                 print("Received None")
 
