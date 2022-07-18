@@ -1,4 +1,5 @@
 from bitarray import bitarray
+import binascii
 
 
 def BER(input1: bytes, input2: bytes) -> float:
@@ -10,3 +11,7 @@ def BER(input1: bytes, input2: bytes) -> float:
         raise Exception("Unequal Lengths")
     result = array1 ^ array2
     return float(result.count(1)) / float(len(result))
+
+
+def formatBytes(input: bytes) -> str:
+    return str(binascii.hexlify(bytearray(input)))
