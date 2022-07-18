@@ -10,7 +10,9 @@ def BER(input1: bytes, input2: bytes) -> float:
     if (len(array1) != len(array2)):
         raise Exception("Unequal Lengths")
     result = array1 ^ array2
-    return float(result.count(1)) / float(len(result))
+    matching_bits = result.count(1)
+    return (float(matching_bits) / float(len(result)), len(result),
+            matching_bits)
 
 
 def formatBytes(input: bytes) -> str:

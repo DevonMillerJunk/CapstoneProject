@@ -195,16 +195,12 @@ class LoRa_socket:
         retries = 0
         response = None
         while response is None and retries <= 10:
-            print("Testing send:")
             self.__send_packet(address, rec_freq, payload)
             response = self.__receive(10)
             if not response:
-                print("Have not received a response with " + str(retries) +
-                      " retries")
                 retries += 1
         if response is not None:
             self.packet_num = int(response)
-            print("Response received!!!!")
         else:
             print("packet delivery failed for " + str(self.packet_num))
 
@@ -250,22 +246,18 @@ class LoRa_socket:
             time.sleep(0.5)
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
             address = int.from_bytes(r_buff[0:2], "big")
-            freq = r_buff[2] + self.start_freq
+            freq = r_buff[2]
             msg_len = r_buff[3]
-            msg = r_buff[4:min(
-                len(r_buff), 4 + msg_len
-            )]  #Note: should change to be a wait for the len to arrive
+            msg = (r_buff[4:min(len(r_buff), 4 + msg_len)]).decode(
+            )  #Note: should change to be a wait for the len to arrive
             #decoded_msg = self.crc.decode(bytes(msg))
 
             print(
                 "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"
-                % (address, freq),
+                % (address, self.start_freq + freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + msg.decode(), end='\r\n')
-
-            self.connected_address = address
-            self.connected_freq = freq - self.start_freq
+            print("message is " + msg, end='\r\n')
 
             # print the rssi
             if self.rssi:
@@ -276,12 +268,14 @@ class LoRa_socket:
             else:
                 pass
                 #print('\x1b[2A',end='\r')
-            return msg
+            return (msg, address, freq)
         else:
             return None
 
     def recv(self, timeout: float = 1):
-        res = self.__receive(timeout)
+        (res, addr, freq) = self.__receive(timeout)
+        self.connected_address = addr
+        self.connected_freq = freq
         if (res != None):
             self.__send_ack()
         return res
