@@ -262,23 +262,25 @@ class LoRa_socket:
             # print the rssi
             if self.rssi:
                 # print('\x1b[3A',end='\r')
-                print("the packet rssi value: -{0}dBm".format(256 -
-                                                              r_buff[-1:][0]))
-                self.__get_channel_rssi()
+                pkt_rssi = (256 - r_buff[-1:][0])*-1
+                print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
+                channel_rssi = self.__get_channel_rssi()
+                
+                return (msg, address, freq, pkt_rssi, channel_rssi)
             else:
                 pass
                 #print('\x1b[2A',end='\r')
-            return (msg, address, freq)
+            return (msg, address, freq, None, None)
         else:
-            return (None, None, None)
+            return (None, None, None, None, None)
 
     def recv(self, timeout: float = 1):
-        (res, addr, freq) = self.__receive(timeout)
+        (res, addr, freq, pkt_rssi, ch_rssi) = self.__receive(timeout)
         self.connected_address = addr
         self.connected_freq = freq
         if (res != None):
             self.__send_ack()
-        return res
+        return (res, addr, freq, pkt_rssi, ch_rssi)
 
     def connect(self):
         retryTimeout = 10  #seconds
@@ -324,10 +326,13 @@ class LoRa_socket:
             time.sleep(0.1)
             re_temp = self.ser.read(self.ser.inWaiting())
         if re_temp[0] == 0xC1 and re_temp[1] == 0x00 and re_temp[2] == 0x02:
+            channel_rssi = (256 - re_temp[3])*-1
             print("the current noise rssi value: -{0}dBm".format(256 -
                                                                  re_temp[3]))
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
+            return channel_rssi
         else:
             # pass
             print("receive rssi value fail")
             # print("receive rssi value fail: ",re_temp)
+            return None
