@@ -182,6 +182,8 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, rec_freq: int, payload):
+        print("Sending Packet to address" + str(address) + " from address " +
+              str(self.addr))
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
@@ -247,13 +249,9 @@ class LoRa_socket:
         if self.ser.inWaiting() > 0:
             time.sleep(0.5)
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
-            print("Message Received: " + u.formatBytes(r_buff))
             address = r_buff[0] << 8 + r_buff[1]
-            print("Address: " + str(address))
             freq = r_buff[2] + self.start_freq
-            print("Freq: " + str(freq))
             msg_len = r_buff[3]
-            print("Length: " + str(msg_len))
             msg = r_buff[4:min(
                 len(r_buff), 4 + msg_len
             )]  #Note: should change to be a wait for the len to arrive
