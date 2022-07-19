@@ -64,7 +64,7 @@ try:
         args = arg_parser.parse_args()
 
         # Receiver setup CSV file
-        csv_header = ["msg", "addr", "freq", "pkt RSSI", "ch RSSI", "Curr BER", "Overall BER", "Overall FER"]
+        csv_header = ["msg", "addr", "rx addr", "pkt RSSI", "ch RSSI", "Curr BER", "Overall BER", "Overall FER"]
         u.createOutputCSV(args.file_name, csv_header)
 
         # initialize error tracking variables
