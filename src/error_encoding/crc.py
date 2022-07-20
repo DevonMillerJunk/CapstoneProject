@@ -1,3 +1,4 @@
+from random import random
 from bitarray import bitarray
 import binascii
 
@@ -29,6 +30,9 @@ class CRC:
             if curr_pick < len(bits):
                 tmp.append(bits[curr_pick])
             curr_pick += 1
+        test = random.uniform(0,1)
+        if (test < 0.33):
+            tmp[self.key_len] ^= 1
         return tmp[:self.key_len].tobytes()
 
     def encode(self, message: str) -> bytes:
