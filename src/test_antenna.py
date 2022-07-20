@@ -14,6 +14,7 @@
 #    Please refer to another script pc_main.py
 #
 
+import random
 import sys
 import LoRa_socket
 import threading
@@ -33,7 +34,7 @@ TX_addr = 64
 
 TX = True
 
-sampleString = "CR8Jyb5hXCzXHKJV0N2e"
+sampleString = "OjabDFbjNAdlNBLDSnbAdfnjADNFGJadfhgLasbnerVoEHJgZDfjhGBaoeRJHGbaOdhrugBLzdHJFGBvpoUEhrgVAoDFHJLGaDfhjNPAoeurhGJNbpaOUDIfbhNAodfljkHGASDGWfgnwSTDhvAdryvAdsgVerybaVryvqerLHBILBLajsdhGPIEUGFPIJlkhgqeliVl"
 
 node_address = TX_addr
 if TX == False:
@@ -56,6 +57,11 @@ try:
 
         print(f"Sending Sample string every {period} seconds")
         for i in range(0, args.num_msgs):
+            sampleString = "OjabDFbjNAdlNBLDSnbAdfnjADNFGJadfhgLasbnerVoEHJgZDfjhGBaoeRJHGbaOdhrugBLzdHJFGBvpoUEhrgVAoDFHJLGaDfhjNPAoeurhGJNbpaOUDIfbhNAodfljkHGASDGWfgnwSTDhvAdryvAdsgVerybaVryvqerLHBILBLajsdhGPIEUGFPIJlkhgqeliVl"
+            test = random.uniform(0,1)
+            if (test < 0.33):
+                sampleString = "OkabDFbjNAdlNBLDSnbAdfnjADNFGJadfhgLasbnerVoEHJgZDfjhGBaoeRJHGbaOdhrugBLzdHJFGBvpoUEhrgVAoDFHJLGaDfhjNPAoeurhGJNbpaOUDIfbhNAodfljkHGASDGWfgnwSTDhvAdryvAdsgVerybaVryvqerLHBILBLajsdhGPIEUGFPIJlkhgqeliVl"
+
             node.send(RX_addr, 0, sampleString)
             time.sleep(period)
     else:
