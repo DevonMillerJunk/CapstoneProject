@@ -64,7 +64,7 @@ try:
             if TEST_ERRORS:
                 message = u.flipNbits(message, random.randint(1, 20))
 
-            node.send(RX_addr, 0, message.decode())
+            node.send(RX_addr, 0, message.decode(), 0)
             time.sleep(period)
     else:
         # Define and parse command line arguments
