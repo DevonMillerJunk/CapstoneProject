@@ -191,18 +191,19 @@ class LoRa_socket:
             self.__encode_data__(payload)
         self.__raw_send(data)
 
-    def send(self, address: int, rec_freq: int, payload):
+    def send(self, address: int, rec_freq: int, payload, numRetries=10):
         retries = 0
         response = None
-        while response is None and retries <= 10:
+        while response is None and retries <= numRetries:
             self.__send_packet(address, rec_freq, payload)
-            (response, _, _) = self.__receive(10)
+            (response, _, _) = self.__receive(2)
             if not response:
                 retries += 1
         if response is not None:
             self.packet_num = int(response)
+            return True
         else:
-            print("packet delivery failed for " + str(self.packet_num))
+            return False
 
     def broadcast(self, payload):
         data: bytes = bytes([255]) +\

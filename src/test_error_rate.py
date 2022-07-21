@@ -29,6 +29,7 @@ tty.setcbreak(sys.stdin.fileno())
 
 RX_addr = 65
 TX_addr = 64
+BROADCAST_addr = 0
 
 TX = True
 
@@ -42,18 +43,26 @@ node = LoRa_socket.LoRa_socket(addr=node_address)
 
 def sendString():
     node.send(RX_addr, 0, sampleString)
-    time.sleep(5)
 
 
-period = 5
+period = 2
 try:
     time.sleep(1)
     print("Press \033[1;32mEsc\033[0m to exit")
 
     if TX:
+        num_failed_packets = 0
+        num_sent_packets = 0
+        sent = False
         print("Sending Sample string every " + str(period) + " seconds")
         while True:
-            node.send(RX_addr, 0, sampleString)
+            sent = node.send(BROADCAST_addr, 0, sampleString, 1)
+            if (sent == False):
+                num_failed_packets += 1
+            num_sent_packets += 1
+            print("This packet was delivered: " + str(sent) +
+                  " total packets deliverd: " + str(num_sent_packets) +
+                  " failed packet sends: " + str(num_failed_packets))
             time.sleep(period)
     else:
         messages_received = 0
