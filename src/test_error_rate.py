@@ -45,7 +45,7 @@ def sendString():
     node.send(RX_addr, 0, sampleString)
 
 
-period = 2
+period = 0.5
 try:
     time.sleep(1)
     print("Press \033[1;32mEsc\033[0m to exit")
@@ -56,13 +56,13 @@ try:
         sent = False
         print("Sending Sample string every " + str(period) + " seconds")
         while True:
-            sent = node.send(BROADCAST_addr, 0, sampleString, 1)
+            sent = node.send(RX_addr, 0, sampleString, 0)
             if (sent == False):
                 num_failed_packets += 1
             num_sent_packets += 1
-            print("This packet was delivered: " + str(sent) +
-                  " total packets deliverd: " + str(num_sent_packets) +
-                  " failed packet sends: " + str(num_failed_packets))
+            print("Packet Delivered: " + str(sent) + " total packets: " +
+                  str(num_sent_packets) + " failed: " +
+                  str(num_failed_packets))
             time.sleep(period)
     else:
         messages_received = 0
