@@ -1,5 +1,7 @@
 import settings as s
 
+BROADCAST_addr = 65536
+
 ### Raspberry Pi Constants ###
 M0 = 22
 M1 = 27

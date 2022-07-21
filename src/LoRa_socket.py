@@ -191,25 +191,24 @@ class LoRa_socket:
             self.__encode_data__(payload)
         self.__raw_send(data)
 
-    def send(self, address: int, rec_freq: int, payload):
+    def send(self, address: int, rec_freq: int, payload: str, numRetries=10):
         retries = 0
         response = None
-        while response is None and retries <= 10:
+        while response is None and retries <= numRetries:
             self.__send_packet(address, rec_freq, payload)
             (response, _, _, _, _) = self.__receive(10)
             if not response:
                 retries += 1
         if response is not None:
             self.packet_num = int(response)
+            return True
         else:
-            print("packet delivery failed for " + str(self.packet_num))
+            return False
 
     def broadcast(self, payload):
-        data: bytes = bytes([255]) +\
-                      bytes([255]) +\
+        data: bytes = self.__format_addr__(constants.BROADCAST_addr) +\
                       bytes([self.offset_freq]) +\
-                      bytes([255]) +\
-                      bytes([255]) +\
+                      self.__format_addr__(self.addr) +\
                       bytes([self.offset_freq]) +\
                       payload
         self.__raw_send(data)
@@ -262,10 +261,11 @@ class LoRa_socket:
             # print the rssi
             if self.rssi:
                 # print('\x1b[3A',end='\r')
-                pkt_rssi = (256 - r_buff[-1:][0])*-1
-                print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
+                pkt_rssi = (256 - r_buff[-1:][0]) * -1
+                print("the packet rssi value: -{0}dBm".format(256 -
+                                                              r_buff[-1:][0]))
                 channel_rssi = self.__get_channel_rssi()
-                
+
                 return (msg, address, freq, pkt_rssi, channel_rssi)
             else:
                 pass
@@ -326,7 +326,7 @@ class LoRa_socket:
             time.sleep(0.1)
             re_temp = self.ser.read(self.ser.inWaiting())
         if re_temp[0] == 0xC1 and re_temp[1] == 0x00 and re_temp[2] == 0x02:
-            channel_rssi = (256 - re_temp[3])*-1
+            channel_rssi = (256 - re_temp[3]) * -1
             print("the current noise rssi value: -{0}dBm".format(256 -
                                                                  re_temp[3]))
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
