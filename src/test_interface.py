@@ -75,7 +75,7 @@ def send_deal():
 
 def send_cpu_continue():
     data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
-    node.send(0, 0, data)
+    node.send(0, 915, data)
     time.sleep(0.2)
 
 
@@ -90,9 +90,8 @@ try:
     seconds = 10
 
     if TX:
-        # print(
-        #     "attempting to establish connection, broadcasting to nearby nodes")
-        # node.connect()
+        print("attempting to establish connection, broadcasting to nearby nodes")
+        node.connect()
         while True:
             send_cpu_continue()
             time.sleep(5)

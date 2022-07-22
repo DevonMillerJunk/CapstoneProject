@@ -18,7 +18,7 @@ class LoRa_socket:
         0xC2, 0x00, 0x09, 0x00, 0x00, 0x00, 0x62, 0x00, 0x12, 0x43, 0x00, 0x00
     ]
     get_reg = bytes(12)
-    rssi = False
+    rssi = True
     addr = 65535
     serial_n = constants.SERIAL_NUM
     power = constants.POWER
@@ -41,6 +41,7 @@ class LoRa_socket:
         self.serial_n = serial_num
         self.power = power
         self.crc = crc.CRC()
+        print(self.power, air_speed, buffer_size)
         # Initial the GPIO for M0 and M1 Pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
@@ -108,6 +109,8 @@ class LoRa_socket:
             self.cfg_reg[10] = h_crypt
             self.cfg_reg[11] = l_crypt
         self.ser.flushInput()
+
+        print(f"Registers: {self.cfg_reg}")
 
         for i in range(2):
             self.ser.write(bytes(self.cfg_reg))
@@ -189,6 +192,7 @@ class LoRa_socket:
             self.__format_addr__(self.addr) +\
             bytes([self.offset_freq]) +\
             self.__encode_data__(payload)
+        print(data)
         self.__raw_send(data)
 
     def send(self, address: int, rec_freq: int, payload):
@@ -212,6 +216,7 @@ class LoRa_socket:
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
                       payload
+        print(data)
         self.__raw_send(data)
 
     def __raw_send(self, data):
@@ -287,9 +292,10 @@ class LoRa_socket:
         retryPeriod = 0.1  #seconds
         curr_time = 0
         response = None
-        payload: str = self.addr + "," + self.offset_freq
+        payload: str = str(self.addr) + "," + str(self.offset_freq)
+        retries = 0
         while response is None and curr_time < retryTimeout:
-            self.broadcast(payload)
+            self.broadcast(payload.encode())
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
                 retries += 1
@@ -308,7 +314,7 @@ class LoRa_socket:
         resp = listen.split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
-        payload: str = self.addr + "," + self.offset_freq
+        payload: str = str(self.addr) + "," + str(self.offset_freq)
         self.__send_packet(self.connected_address, self.connected_freq,
                            payload)
         print("accepted connection request from" + self.connected_address +
