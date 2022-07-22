@@ -62,7 +62,7 @@ try:
         for i in range(0, args.num_msgs):
             message = encodedSampleString
             if TEST_ERRORS:
-                message = u.flipNbits(message, random.randint(1, 20))
+                message = u.flipNbits(message, random.randint(0, 20))
 
             node.send(RX_addr, 0, message, 0)
             time.sleep(period)
@@ -95,7 +95,7 @@ try:
                 messages_received += 1
                 (curr_BER, bits_recv,
                  correct_bits_recv) = u.BER(encodedSampleString, message)
-                if (bits_recv == correct_bits_recv):
+                if (bits_recv != correct_bits_recv):
                     incorrect_messages_received += 1
                 bits_received += bits_recv
                 incorrect_bits_received += correct_bits_recv
