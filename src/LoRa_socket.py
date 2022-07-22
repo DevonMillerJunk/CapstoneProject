@@ -172,8 +172,8 @@ class LoRa_socket:
     def __format_addr__(self, address: int) -> bytes:
         return bytes([address >> 8]) + bytes([address & 0xff])
 
-    def __encode_data__(self, payload: str) -> bytes:
-        encoding: bytes = payload.encode()
+    def __encode_data__(self, payload: bytes) -> bytes:
+        encoding: bytes = payload
         length = len(encoding)
         return bytes([length]) + encoding
 
@@ -181,7 +181,7 @@ class LoRa_socket:
     #
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
-    def __send_packet(self, address: int, rec_freq: int, payload):
+    def __send_packet(self, address: int, rec_freq: int, payload: bytes):
         print("Sending Packet to address" + str(address) + " from address " +
               str(self.addr))
         data: bytes = self.__format_addr__(address) +\
@@ -191,7 +191,7 @@ class LoRa_socket:
             self.__encode_data__(payload)
         self.__raw_send(data)
 
-    def send(self, address: int, rec_freq: int, payload: str, numRetries=10):
+    def send(self, address: int, rec_freq: int, payload: bytes, numRetries=10):
         retries = 0
         response = None
         while response is None and retries <= numRetries:
@@ -200,7 +200,7 @@ class LoRa_socket:
             if not response:
                 retries += 1
         if response is not None:
-            self.packet_num = int(response)
+            self.packet_num = int(response.decode())
             return True
         else:
             return False
@@ -247,8 +247,8 @@ class LoRa_socket:
             address = int.from_bytes(r_buff[0:2], "big")
             freq = r_buff[2]
             msg_len = r_buff[3]
-            msg = (r_buff[4:min(len(r_buff), 4 + msg_len)]).decode(
-            )  #Note: should change to be a wait for the len to arrive
+            msg = (r_buff[4:min(len(r_buff), 4 + msg_len)]
+                   )  #Note: should change to be a wait for the len to arrive
             #decoded_msg = self.crc.decode(bytes(msg))
 
             print(
@@ -256,7 +256,7 @@ class LoRa_socket:
                 % (address, self.start_freq + freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + msg, end='\r\n')
+            print("message is " + msg.decode(), end='\r\n')
 
             # print the rssi
             if self.rssi:
@@ -289,7 +289,7 @@ class LoRa_socket:
         response = None
         payload: str = self.addr + "," + self.offset_freq
         while response is None and curr_time < retryTimeout:
-            self.broadcast(payload)
+            self.broadcast(payload.encode())
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
                 retries += 1
@@ -305,12 +305,12 @@ class LoRa_socket:
         listen = None
         while listen == None:
             (listen, _, _, _, _) = self.__receive()
-        resp = listen.split(",")
+        resp = listen.decode().split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
         payload: str = self.addr + "," + self.offset_freq
         self.__send_packet(self.connected_address, self.connected_freq,
-                           payload)
+                           payload.encode())
         print("accepted connection request from" + self.connected_address +
               ", " + self.connected_freq)
 
