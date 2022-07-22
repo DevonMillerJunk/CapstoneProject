@@ -94,8 +94,7 @@ try:
             if (message != None):
                 messages_received += 1
                 (curr_BER, bits_recv,
-                 correct_bits_recv) = u.BER(encodedSampleString,
-                                            message.encode())
+                 correct_bits_recv) = u.BER(encodedSampleString, message)
                 if (bits_recv == correct_bits_recv):
                     incorrect_messages_received += 1
                 bits_received += bits_recv
@@ -114,7 +113,7 @@ try:
 
                 if TEST_ERRORS:
                     try:
-                        decodedMessage = encoder.decode(message.encode())
+                        decodedMessage = encoder.decode(message)
                         print("ERROR NOT THROWN FOR CRC")
                     except Exception:
                         print("Exception successfully thrown for invalid crc ")

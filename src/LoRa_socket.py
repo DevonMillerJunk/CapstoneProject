@@ -231,7 +231,7 @@ class LoRa_socket:
                bytes([self.connected_freq]) +\
                self.__format_addr__(self.addr) +\
                bytes([self.offset_freq]) +\
-               self.__encode_data__(str(self.packet_num))
+               self.__encode_data__(str(self.packet_num).encode())
         self.__raw_send(data)
 
     def __receive(self, timeout: float = 1):
@@ -256,7 +256,7 @@ class LoRa_socket:
                 % (address, self.start_freq + freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + msg.decode(), end='\r\n')
+            #print("message is " + msg.decode(), end='\r\n')
 
             # print the rssi
             if self.rssi:
