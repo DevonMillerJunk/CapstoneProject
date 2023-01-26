@@ -286,13 +286,13 @@ class LoRa_socket:
         return (res, addr, freq, pkt_rssi, ch_rssi)
 
     def connect(self):
-        retryTimeout = 10  #seconds
-        retryPeriod = 0.1  #seconds
-        curr_time = 0
+        retries = 10 
+        retryPeriod = 1  #seconds
+        curr_retry = 0
         response = None
         payload: str = str(self.addr) + "," + str(self.offset_freq)
         retries = 0
-        while response is None and curr_time < retryTimeout:
+        while response is None and curr_retry < retries:
             self.broadcast(payload)
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
