@@ -38,8 +38,10 @@ def get_cpu_temp():
 
 
 node_address = 64
+opposite_address = 0
 if TX == False:
     node_address = 0
+    opposite_address = 64
 node = LoRa_socket.LoRa_socket(addr=node_address)
 
 
@@ -75,7 +77,7 @@ def send_deal():
 
 def send_cpu_continue():
     data = "CPU Temperature:" + str(get_cpu_temp()) + " C"
-    node.send(node_address, 915, data)
+    node.send(opposite_address, 915, data)
     time.sleep(0.2)
 
 
