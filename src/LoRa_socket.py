@@ -291,12 +291,11 @@ class LoRa_socket:
         curr_retry = 0
         response = None
         payload: str = str(self.addr) + "," + str(self.offset_freq)
-        retries = 0
         while response is None and curr_retry < retries:
             self.broadcast(payload)
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
-                retries += 1
+                curr_retry += 1
         if response is not None:
             self.connected_address = addr
             self.connected_freq = freq
