@@ -192,7 +192,6 @@ class LoRa_socket:
             self.__format_addr__(self.addr) +\
             bytes([self.offset_freq]) +\
             self.__encode_data__(payload)
-        print(data)
         self.__raw_send(data)
 
     def send(self, address: int, rec_freq: int, payload):
@@ -216,7 +215,6 @@ class LoRa_socket:
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
                       self.__encode_data__(payload)
-        print(data)
         self.__raw_send(data)
 
     def __raw_send(self, data):
