@@ -215,7 +215,7 @@ class LoRa_socket:
                       bytes([255]) +\
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
-                      payload
+                      self.__encode_data__(payload)
         print(data)
         self.__raw_send(data)
 
