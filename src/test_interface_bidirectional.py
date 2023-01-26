@@ -96,14 +96,12 @@ try:
         node.connect()
         while True:
             send_cpu_continue()
-            time.sleep(3)
-            node.recv(10)
+            node.recv(2)
     else:
         print("attempting to establish connection, listening for nearby nodes")
         node.accept()
         while True:
-            node.recv(10)
-            time.sleep(3)
+            node.recv(2)
             send_cpu_continue()
 
 except Exception as e:

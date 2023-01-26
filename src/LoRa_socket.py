@@ -199,7 +199,7 @@ class LoRa_socket:
         response = None
         while response is None and retries <= 10:
             self.__send_packet(address, rec_freq, payload)
-            (response, _, _, _, _) = self.__receive(10)
+            (response, _, _, _, _) = self.__receive()
             if not response:
                 retries += 1
         if response is not None:
@@ -287,7 +287,7 @@ class LoRa_socket:
 
     def connect(self):
         retries = 10 
-        retryPeriod = 1  #seconds
+        retryPeriod = 5  #seconds
         curr_retry = 0
         response = None
         payload: str = str(self.addr) + "," + str(self.offset_freq)
