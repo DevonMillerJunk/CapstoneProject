@@ -295,7 +295,7 @@ class LoRa_socket:
         payload: str = str(self.addr) + "," + str(self.offset_freq)
         retries = 0
         while response is None and curr_time < retryTimeout:
-            self.broadcast(payload.encode())
+            self.broadcast(payload)
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
                 retries += 1
