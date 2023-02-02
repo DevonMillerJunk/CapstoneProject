@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import serial
 import time
 import constants
+import settings as s
 import error_encoding.crc as crc
 import util as u
 
@@ -18,7 +19,7 @@ class LoRa_socket:
         0xC2, 0x00, 0x09, 0x00, 0x00, 0x00, 0x62, 0x00, 0x12, 0x43, 0x00, 0x00
     ]
     get_reg = bytes(12)
-    rssi = True
+    rssi = False
     addr = 65535
     serial_n = constants.SERIAL_NUM
     power = constants.POWER
@@ -31,7 +32,7 @@ class LoRa_socket:
     packet_num = 0
 
     def __init__(self,serial_num=constants.SERIAL_NUM,freq=constants.FREQ,\
-                 addr=0,power=constants.POWER,rssi=False,air_speed=constants.AIR_SPEED,\
+                 addr=0,power=constants.POWER,rssi=s.RSSI,air_speed=constants.AIR_SPEED,\
                  net_id=0,buffer_size = constants.BUF_SZ,crypt=0,\
                  relay=False,lbt=False,wor=False):
         self.rssi = rssi
@@ -194,12 +195,13 @@ class LoRa_socket:
             self.__encode_data__(payload)
         self.__raw_send(data)
 
-    def send(self, address: int, rec_freq: int, payload):
+    def send(self, payload, address: int=connected_address, rec_freq: int=connected_freq):
         retries = 0
         response = None
         while response is None and retries <= 10:
             self.__send_packet(address, rec_freq, payload)
-            (response, _, _, _, _) = self.__receive()
+            ack_delay = 4 if self.rssi else 1
+            (response, _, _, _, _) = self.__receive(ack_delay)
             if not response:
                 retries += 1
         if response is not None:
