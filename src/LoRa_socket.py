@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import serial
 import time
 import constants
+import settings as s
 import error_encoding.crc as crc
 import util as u
 
@@ -31,7 +32,7 @@ class LoRa_socket:
     packet_num = 0
 
     def __init__(self,serial_num=constants.SERIAL_NUM,freq=constants.FREQ,\
-                 addr=0,power=constants.POWER,rssi=False,air_speed=constants.AIR_SPEED,\
+                 addr=0,power=constants.POWER,rssi=s.RSSI,air_speed=constants.AIR_SPEED,\
                  net_id=0,buffer_size = constants.BUF_SZ,crypt=0,\
                  relay=False,lbt=False,wor=False):
         self.rssi = rssi
@@ -41,6 +42,7 @@ class LoRa_socket:
         self.serial_n = serial_num
         self.power = power
         self.crc = crc.CRC()
+        print(self.power, air_speed, buffer_size)
         # Initial the GPIO for M0 and M1 Pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
@@ -108,6 +110,8 @@ class LoRa_socket:
             self.cfg_reg[10] = h_crypt
             self.cfg_reg[11] = l_crypt
         self.ser.flushInput()
+
+        print(f"Registers: {self.cfg_reg}")
 
         for i in range(2):
             self.ser.write(bytes(self.cfg_reg))
@@ -191,12 +195,13 @@ class LoRa_socket:
             self.__encode_data__(payload)
         self.__raw_send(data)
 
-    def send(self, address: int, rec_freq: int, payload):
+    def send(self, payload, address: int=connected_address, rec_freq: int=connected_freq):
         retries = 0
         response = None
         while response is None and retries <= 10:
             self.__send_packet(address, rec_freq, payload)
-            (response, _, _) = self.__receive(10)
+            ack_delay = 4 if self.rssi else 1
+            (response, _, _, _, _) = self.__receive(ack_delay)
             if not response:
                 retries += 1
         if response is not None:
@@ -262,35 +267,37 @@ class LoRa_socket:
             # print the rssi
             if self.rssi:
                 # print('\x1b[3A',end='\r')
-                print("the packet rssi value: -{0}dBm".format(256 -
-                                                              r_buff[-1:][0]))
-                self.__get_channel_rssi()
+                pkt_rssi = (256 - r_buff[-1:][0])*-1
+                print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
+                channel_rssi = self.__get_channel_rssi()
+                
+                return (msg, address, freq, pkt_rssi, channel_rssi)
             else:
                 pass
                 #print('\x1b[2A',end='\r')
-            return (msg, address, freq)
+            return (msg, address, freq, None, None)
         else:
-            return (None, None, None)
+            return (None, None, None, None, None)
 
     def recv(self, timeout: float = 1):
-        (res, addr, freq) = self.__receive(timeout)
+        (res, addr, freq, pkt_rssi, ch_rssi) = self.__receive(timeout)
         self.connected_address = addr
         self.connected_freq = freq
         if (res != None):
             self.__send_ack()
-        return res
+        return (res, addr, freq, pkt_rssi, ch_rssi)
 
     def connect(self):
-        retryTimeout = 10  #seconds
-        retryPeriod = 0.1  #seconds
-        curr_time = 0
+        retries = 10 
+        retryPeriod = 5  #seconds
+        curr_retry = 0
         response = None
-        payload: str = self.addr + "," + self.offset_freq
-        while response is None and curr_time < retryTimeout:
+        payload: str = str(self.addr) + "," + str(self.offset_freq)
+        while response is None and curr_retry < retries:
             self.broadcast(payload)
-            (response, addr, freq) = self.__receive(retryPeriod)
+            (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
-                retries += 1
+                curr_retry += 1
         if response is not None:
             self.connected_address = addr
             self.connected_freq = freq
@@ -302,11 +309,11 @@ class LoRa_socket:
     def accept(self):
         listen = None
         while listen == None:
-            (listen, _, _) = self.__receive()
+            (listen, _, _, _, _) = self.__receive()
         resp = listen.split(",")
         self.connected_address = resp[0]
         self.connected_freq = resp[1]
-        payload: str = self.addr + "," + self.offset_freq
+        payload: str = str(self.addr) + "," + str(self.offset_freq)
         self.__send_packet(self.connected_address, self.connected_freq,
                            payload)
         print("accepted connection request from" + self.connected_address +
@@ -324,10 +331,13 @@ class LoRa_socket:
             time.sleep(0.1)
             re_temp = self.ser.read(self.ser.inWaiting())
         if re_temp[0] == 0xC1 and re_temp[1] == 0x00 and re_temp[2] == 0x02:
+            channel_rssi = (256 - re_temp[3])*-1
             print("the current noise rssi value: -{0}dBm".format(256 -
                                                                  re_temp[3]))
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
+            return channel_rssi
         else:
             # pass
             print("receive rssi value fail")
             # print("receive rssi value fail: ",re_temp)
+            return None

@@ -32,6 +32,7 @@ class sx126x:
     #
     # E22-400T22S           E22-900T22S
     # 410~493MHz      or    850~930MHz
+
     offset_freq = 18
 
     # power = 22
@@ -174,7 +175,9 @@ class sx126x:
             self.cfg_reg[10] = h_crypt
             self.cfg_reg[11] = l_crypt
         self.ser.flushInput()
+
         print(f"Registers: {self.cfg_reg}")
+
         for i in range(2):
             self.ser.write(bytes(self.cfg_reg))
             r_buff = 0
@@ -186,7 +189,6 @@ class sx126x:
                     print("parameters setting is :",end='')
                     for i in self.cfg_reg:
                         print(hex(i),end=' ')
-
                     print('\r\n')
                     print("parameters return is  :",end='')
                     for i in r_buff:
@@ -272,10 +274,10 @@ class sx126x:
             if self.rssi:
                 # print('\x1b[3A',end='\r')
                 print("the packet rssi value: -{0}dBm".format(256 - r_buff[-1:][0]))
-                rx_values.append(256 - r_buff[-1:][0])
+                rx_values.append((256 - r_buff[-1:][0])*-1)
                 chan_rssi = self.get_channel_rssi()
                 if chan_rssi:
-                    rx_values.append(chan_rssi)
+                    rx_values.append(chan_rssi*-1)
             else:
                 pass
                 #print('\x1b[2A',end='\r')

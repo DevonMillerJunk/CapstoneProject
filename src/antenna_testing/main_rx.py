@@ -21,7 +21,9 @@ import threading
 import time
 import select
 import termios
+import csv
 import tty
+import argparse
 from threading import Timer
 
 old_settings = termios.tcgetattr(sys.stdin)
@@ -67,7 +69,7 @@ node = sx126x.sx126x(serial_num="/dev/ttyS0",
                      freq=915,
                      addr=0,
                      power=22,
-                     rssi=False,
+                     rssi=True,
                      air_speed=2400,
                      relay=False)
 
@@ -102,11 +104,11 @@ def send_deal():
         ]) + bytes([node.offset_freq]) + get_t[2].encode()
 
     node.send(data)
-    print('\x1b[2A', end='\r')
-    print(" " * 200)
-    print(" " * 200)
-    print(" " * 200)
-    print('\x1b[3A', end='\r')
+    # print('\x1b[2A', end='\r')
+    # print(" " * 200)
+    # print(" " * 200)
+    # print(" " * 200)
+    # print('\x1b[3A', end='\r')
 
 
 def send_cpu_continue(continue_or_not=True):
@@ -136,49 +138,67 @@ def send_cpu_continue(continue_or_not=True):
         timer_task.cancel()
         pass
 
+def process_rx_values_to_file(msg_values, file_string):
+
+    with open(file_string, 'a', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(msg_values)
+
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("file_name", help="A string of the csv output data file path", type=str)
+args = arg_parser.parse_args()
 
 try:
     time.sleep(1)
     print("Starting")
     print("Press \033[1;32mEsc\033[0m to exit")
-    print("Press \033[1;32mi\033[0m   to send")
-    print(
-        "Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
+    #print("Press \033[1;32mi\033[0m   to send")
+    #print("Press \033[1;32ms\033[0m   to send cpu temperature every 10 seconds")
 
     # it will send rpi cpu temperature every 10 seconds
     seconds = 10
+    csv_file = args.file_name
+
+    with open(csv_file, "w", encoding="UTF8") as f:
+        writer = csv.writer(f)
+        header = ["Address", "Frequency", "Message", "String Message", "Packet RSSI", "Channel RSSI"]
+        writer.writerow(header)
 
     while True:
 
         if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+            print("Selection Complete")
             c = sys.stdin.read(1)
 
             # dectect key Esc
             if c == '\x1b': break
             # dectect key i
-            if c == '\x69':
-                send_deal()
+            # if c == '\x69':
+            #    send_deal()
             # dectect key s
-            if c == '\x73':
-                print("Press \033[1;32mc\033[0m   to exit the send task")
-                timer_task = Timer(seconds, send_cpu_continue)
-                timer_task.start()
+            # if c == '\x73':
+             #   print("Press \033[1;32mc\033[0m   to exit the send task")
+              #  timer_task = Timer(seconds, send_cpu_continue)
+               # timer_task.start()
 
-                while True:
-                    if sys.stdin.read(1) == '\x63':
-                        timer_task.cancel()
-                        print('\x1b[1A', end='\r')
-                        print(" " * 100)
-                        print('\x1b[1A', end='\r')
-                        break
+                #while True:
+                 #   if sys.stdin.read(1) == '\x63':
+                  #      timer_task.cancel()
+                   #     print('\x1b[1A', end='\r')
+                    #    print(" " * 100)
+                     #   print('\x1b[1A', end='\r')
+                      #  break
 
-            sys.stdout.flush()
+            #sys.stdout.flush()
 
-        node.receive()
+        rx_values = node.receive()
+        if len(rx_values) > 0: 
+            process_rx_values_to_file(rx_values, csv_file)
 
         # timer,send messages automatically
 
-except:
+except Exception as e:
+    print(f"Exception: {e}")
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
     # print('\x1b[2A',end='\r')
     # print(" "*100)
