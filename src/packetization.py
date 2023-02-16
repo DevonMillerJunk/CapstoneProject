@@ -12,18 +12,29 @@ class Packet:
     # Total Packet size = payload + packet num + crc
     PACKET_DATA_SZ = BUF_SZ - INT_LEN - (USE_CRC if CRC.CRC_SZ else 0)
     
-    def __init__(self, packet_num: int, payload: bytes):
+    def __init__(self, packet_num: int, payload: bytes, fragment_num: int=1, total_fragments: int=1):
         self.packet_num: int = packet_num
         self.payload: bytes  = payload
+        self.fragment_num: int = fragment_num
+        self.total_fragments: int = total_fragments
         
-    # Creates bytes following: packet num | payload
+    # Creates bytes following: packet num | fragment_num | total_fragments | payload
     def __combined_packet(self) -> bytes:
         payload_bits:bitarray = bitarray()
         payload_bits.frombytes(self.payload)
         packet_num_bits:bitarray = int2ba(self.packet_num)
-        padded_0s:bitarray = bitarray(self.INT_LEN - len(packet_num_bits))
-        padded_0s.setall(0)
-        return (padded_0s + packet_num_bits + payload_bits).tobytes()
+        fragment_num_bits: bitarray = int2ba(self.fragment_num)
+        total_frag_bits: bitarray = int2ba(self.total_fragments)
+        padded_0s_packet_num:bitarray = bitarray(self.INT_LEN - len(packet_num_bits))
+        padded_0s_packet_num.setall(0)
+        padded_0s_fragment_num:bitarray = bitarray(self.INT_LEN - len(fragment_num_bits))
+        padded_0s_fragment_num.setall(0)
+        padded_0s_total_frag:bitarray = bitarray(self.INT_LEN - len(total_frag_bits))
+        padded_0s_total_frag.setall(0)
+        return (padded_0s_packet_num + packet_num_bits +\
+                padded_0s_fragment_num + fragment_num_bits +\
+                padded_0s_total_frag + total_frag_bits +\
+                payload_bits).tobytes()
  
     # Return the packet encoded as bytes
     def encode(self) -> bytes:
@@ -41,8 +52,10 @@ class Packet:
         bits:bitarray = bitarray()
         bits.frombytes(result_bytes)
         packet_num:int = ba2int(bits[0:Packet.INT_LEN])
-        payload = bits[Packet.INT_LEN:len(bits)].tobytes()
-        return Packet(packet_num, payload)
+        fragment_num:int = ba2int(bits[Packet.INT_LEN:2*Packet.INT_LEN])
+        total_fragments:int = ba2int(bits[2*Packet.INT_LEN:3*Packet.INT_LEN])
+        payload = bits[3*Packet.INT_LEN:len(bits)].tobytes()
+        return Packet(packet_num, payload, fragment_num, total_fragments)
     
 # input_message: str = "aosjbndoasiidboasibdoaibsdoibasoidasbljkadsnblkasnlkadsnlkas"
 # encoded_input:bytes = input_message.encode()
