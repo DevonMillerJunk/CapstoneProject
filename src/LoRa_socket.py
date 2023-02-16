@@ -7,6 +7,7 @@ import constants
 import settings as s
 import error_encoding.crc as crc
 import util as u
+from packetization import Packet
 
 
 class LoRa_socket:
@@ -172,6 +173,9 @@ class LoRa_socket:
             print("Power is {0} dBm" +
                   constants.LORA_POWER_DIC.get(None, power_temp))
             GPIO.output(self.M1, GPIO.LOW)
+        GPIO.output(self.M1, GPIO.LOW)
+        GPIO.output(self.M0, GPIO.LOW)
+        time.sleep(0.1)
 
     def __format_addr__(self, address: int) -> bytes:
         return bytes([address >> 8]) + bytes([address & 0xff])
@@ -188,56 +192,89 @@ class LoRa_socket:
     def __send_packet(self, address: int, rec_freq: int, payload):
         print("Sending Packet to address" + str(address) + " from address " +
               str(self.addr))
+        length = len(payload)
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
             bytes([self.offset_freq]) +\
-            self.__encode_data__(payload)
+            bytes([length]) + payload
         self.__raw_send(data)
 
     def send(self, payload, address: int=connected_address, rec_freq: int=connected_freq):
         retries = 0
         response = None
+        encoded_payload = self.__encode_data__(payload)
+        packet = Packet(self.packet_num, encoded_payload)
+        packet_encoded = packet.encode()
         while response is None and retries <= 10:
-            self.__send_packet(address, rec_freq, payload)
+            self.__send_packet(address, rec_freq, packet_encoded)
             ack_delay = 4 if self.rssi else 1
             (response, _, _, _, _) = self.__receive(ack_delay)
+            response = response.decode()
             if not response:
                 retries += 1
         if response is not None:
-            self.packet_num = int(response)
+            if (self.packet_num == int(response)):
+                self.packet_num += 1
         else:
             print("packet delivery failed for " + str(self.packet_num))
 
+    def batch_send(self, packets: list[Packet], address: int=connected_address, rec_freq: int=connected_freq):
+        unacked_packets = set()
+        complete = False
+        retries = 0
+        for packet in packets:
+            unacked_packets.add(packet.packet_num)
+        while not complete and retries <= 10:
+            for packet in packets:
+                if packet.packet_num in unacked_packets:
+                    payload = packet.encode()
+                    self.__send_packet(address, rec_freq, payload)
+            ack_delay = 4 if self.rssi else 1
+            (response, _, _, _, _) = self.__receive(ack_delay)
+            response = response.decode()
+            while response is not None:
+                packet_acked = int(response)
+                unacked_packets.remove(packet_acked)
+                if not unacked_packets:
+                    complete = True
+                    break
+                (response, _, _, _, _) = self.__receive(ack_delay)
+                response = response.decode()
+            retries += 1
+        else:
+            print("packet delivery failed for " + str(unacked_packets))
+        
+
     def broadcast(self, payload):
+        length = len(payload)
         data: bytes = bytes([255]) +\
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
                       bytes([255]) +\
                       bytes([255]) +\
                       bytes([self.offset_freq]) +\
-                      payload
+                      bytes([length]) + payload
         self.__raw_send(data)
 
     def __raw_send(self, data):
-        GPIO.output(self.M1, GPIO.LOW)
-        GPIO.output(self.M0, GPIO.LOW)
-        time.sleep(0.1)
-
         self.ser.write(data)
         # if self.rssi == True:
         # self.__get_channel_rssi()
-        time.sleep(0.1)
+        time.sleep(0.05)
 
-    def __send_ack(self):
+    def __send_ack(self, packet_num):
         print("Sending Ack to address:" + str(self.connected_address) +
               " and freq: " + str(self.connected_freq))
-        self.packet_num += 1
+        self.packet_num = packet_num + 1
+        ack_packet = Packet(packet_num, None)
+        encoded_ack = ack_packet.encode()
+        length = len(encoded_ack)
         data: bytes = self.__format_addr__(self.connected_address) +\
                bytes([self.connected_freq]) +\
                self.__format_addr__(self.addr) +\
                bytes([self.offset_freq]) +\
-               self.__encode_data__(str(self.packet_num))
+               bytes([length]) + encoded_ack
         self.__raw_send(data)
 
     def __receive(self, timeout: float = 1):
@@ -248,13 +285,12 @@ class LoRa_socket:
                 time.sleep(check_period)
                 curr_time += check_period
         if self.ser.inWaiting() > 0:
-            time.sleep(0.5)
+            time.sleep(0.05)
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
             address = int.from_bytes(r_buff[0:2], "big")
             freq = r_buff[2]
             msg_len = r_buff[3]
-            msg = (r_buff[4:min(len(r_buff), 4 + msg_len)]).decode(
-            )  #Note: should change to be a wait for the len to arrive
+            msg = r_buff[4:min(len(r_buff), 4 + msg_len)]  #Note: should change to be a wait for the len to arrive
             #decoded_msg = self.crc.decode(bytes(msg))
 
             print(
@@ -262,7 +298,7 @@ class LoRa_socket:
                 % (address, self.start_freq + freq),
                 end='\r\n',
                 flush=True)
-            print("message is " + msg, end='\r\n')
+            print("message is " + msg.decode(), end='\r\n')
 
             # print the rssi
             if self.rssi:
@@ -281,10 +317,11 @@ class LoRa_socket:
 
     def recv(self, timeout: float = 1):
         (res, addr, freq, pkt_rssi, ch_rssi) = self.__receive(timeout)
+        packet = Packet.decode(res)
         self.connected_address = addr
         self.connected_freq = freq
         if (res != None):
-            self.__send_ack()
+            self.__send_ack(packet.packet_num)
         return (res, addr, freq, pkt_rssi, ch_rssi)
 
     def connect(self):
@@ -293,8 +330,10 @@ class LoRa_socket:
         curr_retry = 0
         response = None
         payload: str = str(self.addr) + "," + str(self.offset_freq)
+        packet = Packet(0, payload.encode())
+        packet_encoded = packet.encode()
         while response is None and curr_retry < retries:
-            self.broadcast(payload)
+            self.broadcast(packet_encoded)
             (response, addr, freq, _, _) = self.__receive(retryPeriod)
             if not response:
                 curr_retry += 1
@@ -310,12 +349,15 @@ class LoRa_socket:
         listen = None
         while listen == None:
             (listen, _, _, _, _) = self.__receive()
-        resp = listen.split(",")
-        self.connected_address = resp[0]
-        self.connected_freq = resp[1]
+        resp = Packet.decode(listen)
+        data = resp.payload.split(",")
+        self.connected_address = data[0]
+        self.connected_freq = data[1]
         payload: str = str(self.addr) + "," + str(self.offset_freq)
+        packet = Packet(0, payload.encode())
+        packet_encoded = packet.encode()
         self.__send_packet(self.connected_address, self.connected_freq,
-                           payload)
+                           packet_encoded)
         print("accepted connection request from" + self.connected_address +
               ", " + self.connected_freq)
 
