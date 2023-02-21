@@ -93,7 +93,8 @@ class Frame:
                 self.packets.append(None)
     
     # append the received payload to the frame
-    def append(self, payload: bytes) -> None:
+    # returns the packet number of the received packet
+    def append(self, payload: bytes) -> int:
         packet = Packet.decode(payload)
         ## TODO: keep these for testing, consider commenting out once code properly tested
         if self.packets[packet.get_packet_num()] != None:
@@ -101,6 +102,7 @@ class Frame:
         if self.total_packets != packet.get_total_packets():
             raise Exception("Warning: Mismatched frame total_packets amount")
         self.packets[packet.get_packet_num()] = packet
+        return packet.get_packet_num()
       
     # determine which packets are missing  
     def missing_packets(self) -> List[int]:
