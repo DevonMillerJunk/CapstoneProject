@@ -1,3 +1,4 @@
+import random
 from typing import List
 from bitarray import bitarray
 from bitarray.util import ba2int, int2ba
@@ -12,10 +13,10 @@ import math
 class Packet:
     # Class variables
     CRC = crc.CRC()
-    USE_CRC = True # Temporary while we test with/without crc
-    INT_LEN = 16 # used for decoding, in bits
+    USE_CRC:bool = True # Temporary while we test with/without crc
+    INT_LEN:int = 16 # used for decoding, in bits
     # Total Packet size (in bytes) = payload + packet_num + total_packets + crc = BUF_SZ
-    PACKET_DATA_SZ = BUF_SZ - (2 * (INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
+    PACKET_DATA_SZ:int = BUF_SZ - (2 * math.ceil(INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
     
     # Constructor
     def __init__(self, packet_num: int, total_packets: int, payload: bytes):
@@ -118,28 +119,54 @@ class Frame:
         result:bitarray = bitarray()
         for i in range(self.total_packets):
             packet_payload = bitarray()
-            packet_payload.frombytes(self.packets[i].get_payload)
+            packet_payload.frombytes(self.packets[i].get_payload())
             result += packet_payload
-        return result
+        return result.tobytes()
     
     @staticmethod
     def packetize(payload: bytes) -> List[Packet]:
-        total_packets: int = math.ceil(Packet.PACKET_DATA_SZ / len(payload))
+        total_packets: int = math.ceil(len(payload) / Packet.PACKET_DATA_SZ)
         payload_bits:bitarray = bitarray()
         payload_bits.frombytes(payload)
         packets:List[Packet] = []
         bit_per_packet = Packet.PACKET_DATA_SZ * 8
         for i in range(total_packets):
-            packets.append(Packet(i, total_packets, payload_bits[i*bit_per_packet:min(len(payload_bits, (i+1)*bit_per_packet))].tobytes()))
+            packets.append(Packet(i, total_packets, payload_bits[i*bit_per_packet:min(len(payload_bits), (i+1)*bit_per_packet)].tobytes()))
         return packets    
+   
+def packet_test1():
+    input_message: str = "aosjbndoasiidboasibdoaibsdoibasoidasbljkadsnblkasnlkadsnlkas"
+    encoded_input:bytes = input_message.encode()
+    packet_num:int = 12089
+
+    packet = Packet(packet_num, encoded_input)
+    encoded_packet:bytes = packet.encode()
+    decoded_packet = Packet.decode(encoded_packet)
+
+    print(packet_num == decoded_packet.packet_num)
+    print(input_message == decoded_packet.payload.decode())
     
-# input_message: str = "aosjbndoasiidboasibdoaibsdoibasoidasbljkadsnblkasnlkadsnlkas"
-# encoded_input:bytes = input_message.encode()
-# packet_num:int = 12089
-
-# packet = Packet(packet_num, encoded_input)
-# encoded_packet:bytes = packet.encode()
-# decoded_packet = Packet.decode(encoded_packet)
-
-# print(packet_num == decoded_packet.packet_num)
-# print(input_message == decoded_packet.payload.decode())
+def frame_test1():
+    input_message: str = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dignissim convallis aenean et tortor. Suspendisse sed nisi lacus sed viverra tellus. Nisl condimentum id venenatis a. Sociis natoque penatibus et magnis dis parturient. Egestas maecenas pharetra convallis posuere morbi leo urna. Pharetra et ultrices neque ornare aenean euismod elementum nisi quis. Eget felis eget nunc lobortis mattis aliquam faucibus purus in. Amet dictum sit amet justo donec enim. Consectetur libero id faucibus nisl. In metus vulputate eu scelerisque felis imperdiet proin fermentum. Orci dapibus ultrices in iaculis nunc sed augue lacus. Fusce ut placerat orci nulla pellentesque dignissim enim. Viverra accumsan in nisl nisi scelerisque eu ultrices vitae. Sed augue lacus viverra vitae congue eu consequat ac felis.
+        Enim nec dui nunc mattis enim. Scelerisque mauris pellentesque pulvinar pellentesque. Adipiscing bibendum est ultricies integer quis. A diam sollicitudin tempor id eu nisl nunc mi. Purus ut faucibus pulvinar elementum integer enim neque. Mauris augue neque gravida in fermentum et sollicitudin. Aliquam nulla facilisi cras fermentum odio. Pharetra pharetra massa massa ultricies mi quis hendrerit dolor magna. In fermentum posuere urna nec tincidunt praesent semper feugiat. Aenean pharetra magna ac placerat. Aliquam vestibulum morbi blandit cursus risus at. Vitae semper quis lectus nulla at volutpat diam ut. Ultrices vitae auctor eu augue ut. Egestas purus viverra accumsan in nisl nisi scelerisque. Cursus risus at ultrices mi tempus imperdiet nulla. Mattis enim ut tellus elementum sagittis vitae.
+        Erat velit scelerisque in dictum non. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper dignissim cras tincidunt. Adipiscing elit pellentesque habitant morbi tristique senectus et netus. Dui faucibus in ornare quam viverra orci. Enim neque volutpat ac tincidunt vitae semper quis lectus. Aliquet nec ullamcorper sit amet risus nullam eget felis. Libero nunc consequat interdum varius sit. Sit amet cursus sit amet dictum sit amet. A diam sollicitudin tempor id eu nisl nunc mi ipsum. Sed vulputate mi sit amet mauris commodo quis imperdiet massa. Mauris commodo quis imperdiet massa tincidunt nunc. In aliquam sem fringilla ut morbi tincidunt augue interdum. Nulla at volutpat diam ut. Tortor posuere ac ut consequat semper viverra nam libero. Tellus at urna condimentum mattis. Congue quisque egestas diam in.
+        Cras ornare arcu dui vivamus. Sed tempus urna et pharetra pharetra. Massa sapien faucibus et molestie ac feugiat. Egestas erat imperdiet sed euismod nisi porta lorem. Mi proin sed libero enim sed faucibus. Diam maecenas sed enim ut sem viverra. Turpis massa tincidunt dui ut ornare lectus sit amet. Vitae aliquet nec ullamcorper sit amet risus nullam. Mauris cursus mattis molestie a. Curabitur vitae nunc sed velit dignissim sodales ut eu sem. Quis vel eros donec ac odio tempor orci dapibus ultrices. Neque viverra justo nec ultrices dui sapien eget mi. Urna neque viverra justo nec ultrices. Gravida rutrum quisque non tellus orci. Sem nulla pharetra diam sit amet nisl suscipit adipiscing. Nibh mauris cursus mattis molestie a.
+        Mauris cursus mattis molestie a iaculis at erat pellentesque adipiscing. Odio morbi quis commodo odio aenean sed adipiscing. Ut sem viverra aliquet eget sit amet. Vel fringilla est ullamcorper eget nulla facilisi. Vitae proin sagittis nisl rhoncus. Iaculis at erat pellentesque adipiscing commodo elit at. Suscipit adipiscing bibendum est ultricies. Elit eget gravida cum sociis natoque penatibus. Quis vel eros donec ac odio. Amet est placerat in egestas erat imperdiet sed. Bibendum neque egestas congue quisque egestas diam in arcu cursus. Tortor id aliquet lectus proin nibh. In fermentum posuere urna nec. Faucibus turpis in eu mi bibendum neque egestas congue quisque. Aliquam etiam erat velit scelerisque in dictum. Facilisis leo vel fringilla est. Purus sit amet luctus venenatis lectus. Dignissim enim sit amet venenatis urna cursus eget nunc. Nascetur ridiculus mus mauris vitae ultricies leo integer malesuada."""
+    encoded_input:bytes = input_message.encode()
+    
+    frames_to_send = Frame.packetize(encoded_input)
+    print(f'Sending {len(frames_to_send)} frames')
+    
+    # Shuffle the list to ensure correctness under misordered receiving
+    random.shuffle(frames_to_send)
+    
+    recv_frame: Frame = Frame(frames_to_send[0].encode())
+    for i in range(1, len(frames_to_send)):
+        recv_frame.append(frames_to_send[i].encode())
+    if len(recv_frame.missing_packets()) != 0 or recv_frame.all_packets_recv() == False:
+        print("Still missing packets")
+    decoded_message: str = recv_frame.get_payload().decode()
+    
+    print(f'Returned message equal? {decoded_message == input_message}')
+   
+#frame_test1()

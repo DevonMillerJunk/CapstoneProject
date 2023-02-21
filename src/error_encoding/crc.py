@@ -48,14 +48,16 @@ class CRC:
         raise Exception("Invalid message received")
 
 
-# crc = CRC()
-# input_message: str = "TestSendingARandomMessageToEnsureTheCrcIsWorking"
-# encoded_input:bytes = input_message.encode()
-# crc_encoded_input:bytes = crc.encode(encoded_input)
-# crc_decoded_input:bytes = crc.decode(crc_encoded_input)
-# decoded_input:str = str(crc_decoded_input.decode())
-# successful_encoding:bool = encoded_input == crc_decoded_input
-# if successful_encoding:
-#     print("Successful crc encode&decode!")
-# else:
-#     print("Unsuccessful crc encode&decode")
+def crc_test1():
+    crc = CRC()
+    input_message: str = "TestSendingARandomMessageToEnsureTheCrcIsWorking"
+    encoded_input:bytes = input_message.encode()
+    crc_encoded_input:bytes = crc.encode(encoded_input)
+    crc_decoded_input:bytes = crc.decode(crc_encoded_input)
+    decoded_input:str = str(crc_decoded_input.decode())
+    successful_encoding:bool = encoded_input == crc_decoded_input
+    if successful_encoding:
+        print("Successful crc encode&decode!")
+    else:
+        print("Unsuccessful crc encode&decode")
+#crc_test1
