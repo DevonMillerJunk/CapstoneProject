@@ -4,7 +4,7 @@ import binascii
 
 class CRC:
     DEFAULT_KEY: bytes = b'\xf8\xc9\x14\x0a'
-    CRC_SZ = len(DEFAULT_KEY)
+    CRC_SZ = len(DEFAULT_KEY) # length of CRC in bytes
 
     def __init__(self, key: bytes = DEFAULT_KEY, key_len=0):
         self.key = bitarray()
