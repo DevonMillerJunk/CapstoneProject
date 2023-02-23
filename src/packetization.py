@@ -192,5 +192,5 @@ def frame_test1():
     decoded_message: str = recv_frame.get_payload().decode()
     print(f'Returned message equal? {decoded_message == input_message}')
 
-packet_test1()
-frame_test1()
+# packet_test1()
+# frame_test1()
