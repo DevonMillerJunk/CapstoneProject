@@ -215,6 +215,9 @@ class LoRa_socket:
             self.__encode_data__(packet)
         self.__raw_send(data)
 
+    def __send_ack(self, packet_num: int, address: int=connected_address) -> None:
+        self.__send_packet(address, Packet(True, packet_num, None, None))
+        
     def send(self, payload: bytes, address: int=connected_address) -> None:
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
@@ -243,9 +246,10 @@ class LoRa_socket:
         else:
             # TODO: remove for speedup
             print(f'Payload delivered. {retries} retries occurred.')
-
+        
+    # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple[Packet | None, int | None, int | None, int | None, int | None]:
-        check_period = 0.01
+        check_period = 0.005
         if (timeout > 0):
             curr_time: float = 0
             while self.ser.inWaiting() <= 0 and curr_time < timeout:
@@ -283,17 +287,26 @@ class LoRa_socket:
         else:
             return (None, None, None, None, None)
 
-    # Receives one packet
-    # TODO: need to include frame code to be able to recv multiple packets in a single frame
-    def recv(self, timeout: float = 1) -> Tuple[Packet | None, int | None, int | None, int | None, int | None]:
-        (res, addr, freq, pkt_rssi, ch_rssi) = self.__receive(timeout)
+    # Receives one frame (in bytes)
+    # Returns: payload, address
+    # Note: timeout is between consecutive packets, could take multiples of the timeout
+    def recv(self, timeout: float = 1) -> Tuple[bytes, int] | None:
+        (res, addr, freq, _, _) = self.__receive(timeout)
         if (res != None):
-            packet = Packet.decode(res)
             self.connected_address = addr
             self.connected_freq = freq
-            # Send ACK
-            self.__send_packet(addr, Packet(True, packet.packet_num, None, None))
-        return (res, addr, freq, pkt_rssi, ch_rssi)
+            self.__send_ack(res.packet_num)
+            frame: Frame = Frame(res)
+            while frame.all_packets_recv() == False:
+                (res, addr, _, _, _) = self.__receive(timeout)
+                if res != None and addr == self.connected_address and res.is_ack == False:
+                    frame.append(res)
+                else:
+                    # Couldn't retrieve package in timeout, exiting
+                    print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
+                    break
+            return (frame.get_payload(), self.connected_address) if frame.all_packets_recv() else None
+        return None
 
     def connect(self):
         retryPeriod = 5  #seconds
@@ -327,7 +340,7 @@ class LoRa_socket:
         data = listen.payload.split(",")
         self.connected_address = data[0]
         self.connected_freq = data[1]
-        self.__send_packet(self.connected_address, Packet(True, listen.packet_num, None, None))
+        self.__send_ack(listen.packet_num)
         print("accepted connection request from" + self.connected_address +
               ", " + self.connected_freq)
 
