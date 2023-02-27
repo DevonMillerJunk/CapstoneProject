@@ -2,6 +2,14 @@ from bitarray import bitarray
 import binascii
 import csv
 
+
+#    The following is to obtain the temprature of the RPi CPU
+def get_cpu_temp() -> float:
+    tempFile = open("/sys/class/thermal/thermal_zone0/temp")
+    cpu_temp = tempFile.read()
+    tempFile.close()
+    return float(cpu_temp) / 1000
+
 def BER(input1: bytes, input2: bytes) -> float:
     array1 = bitarray()
     array1.frombytes(input1)
