@@ -32,7 +32,7 @@ def run_test(arguments):
         if arg_tx:
             print("attempting to establish connection, broadcasting to nearby nodes")
             conn_addr = node.connect()
-            if conn_addr is None:
+            if conn_addr is not None:
                 print("Connection established. Moving on to sending:")
                 while True:
                     node.send(f'Temp is {u.get_cpu_temp()} deg C'.encode(), conn_addr)

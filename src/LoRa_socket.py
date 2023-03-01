@@ -194,7 +194,7 @@ class LoRa_socket:
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, packet: Packet) -> None:
         # TODO: remove to speed up sending
-        print("Sending Packet to address" + str(address) + " from address " +
+        print("Sending Packet to address " + str(address) + " from address " +
               str(self.addr))
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
@@ -321,7 +321,6 @@ class LoRa_socket:
         while curr_retry <= self.max_retries:
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
-            print(f'{res} {addr} {freq}')
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
                 curr_retry += 1
             else:
@@ -330,8 +329,7 @@ class LoRa_socket:
         if response is not None:
             self.connected_address = addr
             self.connected_freq = freq
-            print("connected to" + self.connected_address + ", " +
-                  self.connected_freq)
+            print(f'connected to {self.connected_address} {self.connected_freq}MHz')
             return addr
         else:
             print("connection attempt failed")
@@ -341,13 +339,11 @@ class LoRa_socket:
         listen = None
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
-            if listen is not None:
-                print(listen.payload.decode())
         data = listen.payload.decode().split(",")
         self.connected_address = data[0]
         self.connected_freq = data[1]
         self.__send_ack(listen.packet_num)
-        print("accepted connection request from" + self.connected_address +
+        print("accepted connection request from " + self.connected_address +
               ", " + self.connected_freq)
 
     def __get_channel_rssi(self):
