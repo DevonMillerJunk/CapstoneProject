@@ -248,7 +248,7 @@ class LoRa_socket:
             print(f'Payload delivered. {retries} retries occurred.')
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
-    def __receive(self, timeout: float = 1) -> Tuple[Packet | None, int | None, int | None, int | None, int | None]:
+    def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
         check_period = 0.005
         if (timeout > 0):
             curr_time: float = 0
@@ -290,7 +290,7 @@ class LoRa_socket:
     # Receives one frame (in bytes)
     # Returns: payload, address
     # Note: timeout is between consecutive packets, could take multiples of the timeout
-    def recv(self, timeout: float = 1) -> Tuple[bytes, int] | None:
+    def recv(self, timeout: float = 1) -> 'Tuple[bytes, int] | None':
         (res, addr, freq, _, _) = self.__receive(timeout)
         if (res != None):
             self.connected_address = addr
