@@ -19,32 +19,31 @@ import LoRa_socket
 import time
 import util as u
 
-# Call with test_bidirectional {true/false for tx/recv} {addr} {if tx recv_addr}
+# Call with test_bidirectional {true/false for tx/recv} {addr}
 def run_test(arguments):
     arg_tx = arguments[1].lower().capitalize() == "True"
     arg_addr = int(arguments[2])
-    arg_recv_addr = -1
-    if arg_tx:
-        arg_recv_addr = int(arguments[3])
         
-    print(f'Starting Test: tx:{arg_tx} self_addr:{arg_addr} recv_addr:{arg_recv_addr}')
+    print(f'Starting Test: tx:{arg_tx} self_addr:{arg_addr}')
         
     node = LoRa_socket.LoRa_socket(addr=arg_addr)
     try:
         time.sleep(1)
         if arg_tx:
             print("attempting to establish connection, broadcasting to nearby nodes")
-            node.connect()
-            print("Connection established. Moving on to sending:")
-            while True:
-                node.send(f'Temp is {u.get_cpu_temp()} deg C'.encode(), arg_recv_addr)
-                received_message = node.recv(5)
-                if received_message is not None:
-                    print(f'Received Message: {received_message[0]}')
-                else:
-                    print("Did not receive a response")
-                time.sleep(2)
-                
+            conn_addr = node.connect()
+            if conn_addr is None:
+                print("Connection established. Moving on to sending:")
+                while True:
+                    node.send(f'Temp is {u.get_cpu_temp()} deg C'.encode(), conn_addr)
+                    received_message = node.recv(5)
+                    if received_message is not None:
+                        print(f'Received Message: {received_message[0]}')
+                    else:
+                        print("Did not receive a response")
+                    time.sleep(2)
+            else:
+                print("Unable to establish connection. Closing program")
         else:
             print("attempting to establish connection, listening for nearby nodes")
             node.accept()

@@ -266,6 +266,7 @@ class LoRa_socket:
             freq = r_buff[2]
             msg_len = r_buff[3]
             msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
+            print(f'Received message: {msg}')
             packet = Packet.decode(msg)
             pkt_rssi = None
             channel_rssi = None
@@ -308,7 +309,7 @@ class LoRa_socket:
             return (frame.get_payload(), self.connected_address) if frame.all_packets_recv() else None
         return None
 
-    def connect(self):
+    def connect(self) -> 'int | None':
         retryPeriod = 5  #seconds
         payload: str = str(self.addr) + "," + str(self.offset_freq)
         packet = Packet(False, 0, 1, payload.encode())
@@ -320,6 +321,7 @@ class LoRa_socket:
         while curr_retry <= self.max_retries:
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
+            print(f'{res} {addr} {freq}')
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
                 curr_retry += 1
             else:
@@ -330,8 +332,10 @@ class LoRa_socket:
             self.connected_freq = freq
             print("connected to" + self.connected_address + ", " +
                   self.connected_freq)
+            return addr
         else:
             print("connection attempt failed")
+            return None
 
     def accept(self):
         listen = None
