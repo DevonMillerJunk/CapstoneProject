@@ -343,8 +343,7 @@ class LoRa_socket:
         self.connected_address = data[0]
         self.connected_freq = data[1]
         self.__send_ack(listen.packet_num)
-        print("accepted connection request from " + self.connected_address +
-              ", " + self.start_freq + self.connected_freq)
+        print(f'accepted connection request from {self.connected_address}, {self.start_freq + self.connected_freq}')
 
     def __get_channel_rssi(self):
         GPIO.output(self.M1, GPIO.LOW)
