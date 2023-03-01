@@ -340,8 +340,8 @@ class LoRa_socket:
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
         data = listen.payload.decode().split(",")
-        self.connected_address = data[0]
-        self.connected_freq = data[1]
+        self.connected_address = int(data[0])
+        self.connected_freq = int(data[1])
         self.__send_ack(listen.packet_num)
         print(f'accepted connection request from {self.connected_address}, {self.start_freq + self.connected_freq}')
 
