@@ -41,7 +41,7 @@ class LoRa_socket:
         self.freq = freq
         self.serial_n = serial_num
         self.power = power
-        print(self.power, air_speed, buffer_size)
+        print(f'Power: {self.power} Air Speed: {air_speed} Buffer Size: {buffer_size}')
         # Initial the GPIO for M0 and M1 Pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
