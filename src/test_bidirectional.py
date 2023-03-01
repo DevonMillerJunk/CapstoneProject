@@ -21,6 +21,7 @@ import util as u
 
 # Call with test_bidirectional {true/false for tx/recv} {addr} {if tx recv_addr}
 def run_test(arguments):
+    print(arguments[1])
     arg_tx = bool(arguments[1])
     arg_addr = int(arguments[2])
     arg_recv_addr = -1
