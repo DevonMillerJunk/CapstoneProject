@@ -38,7 +38,7 @@ def run_test(arguments):
                     node.send(f'Temp is {u.get_cpu_temp()} deg C'.encode(), conn_addr)
                     received_message = node.recv(5)
                     if received_message is not None:
-                        print(f'Received Message: {received_message[0]}')
+                        print(f'Received Message: {received_message[0].decode()}')
                     else:
                         print("Did not receive a response")
                     time.sleep(2)
@@ -52,7 +52,7 @@ def run_test(arguments):
                 if received_message is not None:
                     (payload, addr) = received_message
                     print(f'Received Message: {payload.decode()}')
-                    node.send(f'RETURN TO SENDER-${payload.decode()}'.encode(), addr)
+                    node.send(f'RETURN TO SENDER-{payload.decode()}'.encode(), addr)
                 else:
                     print("Did not receive a message")
 

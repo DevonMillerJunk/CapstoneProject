@@ -329,7 +329,7 @@ class LoRa_socket:
         if response is not None:
             self.connected_address = addr
             self.connected_freq = freq
-            print(f'connected to {self.connected_address} {self.connected_freq}MHz')
+            print(f'connected to {self.connected_address} {self.start_freq + self.connected_freq}MHz')
             return addr
         else:
             print("connection attempt failed")
@@ -344,7 +344,7 @@ class LoRa_socket:
         self.connected_freq = data[1]
         self.__send_ack(listen.packet_num)
         print("accepted connection request from " + self.connected_address +
-              ", " + self.connected_freq)
+              ", " + self.start_freq + self.connected_freq)
 
     def __get_channel_rssi(self):
         GPIO.output(self.M1, GPIO.LOW)
