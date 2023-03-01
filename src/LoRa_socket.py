@@ -320,7 +320,7 @@ class LoRa_socket:
         while curr_retry <= self.max_retries:
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
-            if not response or response.is_ack == False or response.packet_num != packet.packet_num:
+            if not res or res.is_ack == False or res.packet_num != packet.packet_num:
                 curr_retry += 1
             else:
                 response = res

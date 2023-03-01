@@ -27,6 +27,8 @@ def run_test(arguments):
     if arg_tx:
         arg_recv_addr = int(arguments[3])
         
+    print(f'Starting Test: tx:{arg_tx} self_addr:{arg_addr} recv_addr:{arg_recv_addr}')
+        
     node = LoRa_socket.LoRa_socket(addr=arg_addr)
     try:
         time.sleep(1)
