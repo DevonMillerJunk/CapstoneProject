@@ -339,7 +339,7 @@ class LoRa_socket:
 
     def accept(self):
         listen = None
-        while listen == None or listen.is_ack == False:
+        while listen == None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
         data = listen.payload.split(",")
         self.connected_address = data[0]
