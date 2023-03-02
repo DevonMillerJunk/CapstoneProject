@@ -302,7 +302,8 @@ class LoRa_socket:
             channel_rssi = None
             
             # Decode RSSI value appended to sent package
-            rssi_payload = self.__read_ser(2, timeout)
+            print(f'There is {self.ser.inWaiting()} bytes waiting')
+            rssi_payload = self.__read_ser(4, timeout)
 
             # print the rssi
             if self.rssi and rssi_payload is not None:
