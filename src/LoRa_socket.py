@@ -207,8 +207,8 @@ class LoRa_socket:
             self.__encode_data__(packet)
         self.__raw_send(data)
 
-    def __send_ack(self, packet_num: int, address: int=connected_address) -> None:
-        print(f'Sending ack: {packet_num}')
+    def __send_ack(self, packet_num: int, address: int) -> None:
+        print(f'Sending ack: {packet_num} to address {address}')
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int=connected_address) -> None:
@@ -287,14 +287,14 @@ class LoRa_socket:
         if (res != None):
             self.connected_address = addr
             self.connected_freq = freq
-            self.__send_ack(res.packet_num)
+            self.__send_ack(res.packet_num, addr)
             try:
                 frame: Frame = Frame(res)
                 while frame.all_packets_recv() == False:
                     (res, addr, _, _, _) = self.__receive(timeout)
                     if res != None and addr == self.connected_address and res.is_ack == False:
                         frame.append(res)
-                        self.__send_ack(res.packet_num)
+                        self.__send_ack(res.packet_num, addr)
                     else:
                         # Couldn't retrieve package in timeout, exiting
                         print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
@@ -337,7 +337,7 @@ class LoRa_socket:
         data = listen.payload.decode().split(",")
         self.connected_address = int(data[0])
         self.connected_freq = int(data[1])
-        self.__send_ack(listen.packet_num)
+        self.__send_ack(listen.packet_num, self.connected_address)
         return self.connected_address
 
     def __get_channel_rssi(self):
