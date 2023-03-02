@@ -276,6 +276,7 @@ class LoRa_socket:
                 return (packet, address, freq, pkt_rssi, channel_rssi)
             except Exception as e:
                 print(f'Error Occurred Decoding Packet: {e}')
+                return (None, None, None, None, None)
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
