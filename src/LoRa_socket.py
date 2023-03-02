@@ -300,9 +300,13 @@ class LoRa_socket:
             print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
             pkt_rssi = None
             channel_rssi = None
+            
+            #Decode RSSI value appended to sent package
+            rssi_payload = self.__read_ser(2, timeout)
+            print(f'Payload Buffer: ${rssi_payload.hex()}')
 
             # print the rssi
-            if self.rssi:
+            if self.rssi and rssi_payload is not None:
                 pkt_rssi = (256 - msg_payload_buffer[-1:][0])*-1
                 channel_rssi = self.__get_channel_rssi()
                 print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
