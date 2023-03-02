@@ -182,7 +182,7 @@ class LoRa_socket:
     def __encode_data__(self, packet: Packet) -> bytes:
         encoding: bytes = packet.encode()
         print(f'Packet num {packet.get_packet_num()} has encoded length: {len(encoding)}')
-        print(f'Encoded Packet is: {int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding}')
+        print(f'Encoded Packet is: {(int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding).hex()}')
         return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
@@ -283,7 +283,7 @@ class LoRa_socket:
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
                 return (None, None, None, None, None)
             
-            print(f'HDR Buffer: ${msg_hdr_buffer}')
+            print(f'HDR Buffer: ${msg_hdr_buffer.hex()}')
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
             freq = msg_hdr_buffer[2]
             
@@ -297,7 +297,7 @@ class LoRa_socket:
             if msg_payload_buffer is None:
                 return (None, None, None, None, None)
             
-            print(f'Payload Buffer: ${msg_payload_buffer}')
+            print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
             pkt_rssi = None
             channel_rssi = None
 
