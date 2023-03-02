@@ -183,9 +183,6 @@ class LoRa_socket:
     
     def __raw_send(self, data: bytes):
         self.ser.write(data)
-        # if self.rssi == True:
-        # self.__get_channel_rssi()
-        # TODO: test for removal
         time.sleep(0.05)
         
     # the sending message format
@@ -193,9 +190,6 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, packet: Packet) -> None:
-        # TODO: remove to speed up sending
-        print("Sending Packet to address " + str(address) + " from address " +
-              str(self.addr))
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
@@ -204,8 +198,6 @@ class LoRa_socket:
         self.__raw_send(data)
         
     def __broadcast_packet(self, packet: Packet) -> None:
-        # TODO: remove to speed up sending
-        print("Broadcasting Packet")
         data: bytes = bytes([255]) +\
             bytes([255]) +\
             bytes([self.offset_freq]) +\
@@ -226,7 +218,8 @@ class LoRa_socket:
         unacked_packets = set()
         for packet in packets:
             unacked_packets.add(packet.packet_num)
-        retries = 0
+        retries = -1
+        self.clear_buffer()
         while len(unacked_packets) > 0 and retries <= self.max_retries:
             # Send all un_acked packets
             for packet in packets:
@@ -244,8 +237,11 @@ class LoRa_socket:
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
         else:
-            # TODO: remove for speedup
             print(f'Payload delivered. {retries} retries occurred.')
+     
+    # Clears the serial buffer incase of packets in progress
+    def clear_buffer(self) -> None:
+        self.ser.read(self.ser.inWaiting())
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
@@ -259,24 +255,16 @@ class LoRa_socket:
             # TODO: remove after testing
             time.sleep(0.05)
             
-            #TODO: may potentially require a loop while readeding from ser
+            #TODO: may potentially require a loop while reading from ser
             # in the case that part of the message arrived
             r_buff: bytes = self.ser.read(self.ser.inWaiting())
             address = int.from_bytes(r_buff[0:2], "big")
             freq = r_buff[2]
             msg_len = r_buff[3]
             msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
-            print(f'Received message: {msg}')
             packet = Packet.decode(msg)
             pkt_rssi = None
             channel_rssi = None
-
-            # TODO: remove for speedup
-            print(
-                "receive message from node address with frequency\033[1;32m %d,%d.125MHz\033[0m"
-                % (address, self.start_freq + freq),
-                end='\r\n',
-                flush=True)
 
             # print the rssi
             if self.rssi:
@@ -319,6 +307,7 @@ class LoRa_socket:
         addr = None
         freq = None
         while curr_retry <= self.max_retries:
+            self.clear_buffer()
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
@@ -329,13 +318,12 @@ class LoRa_socket:
         if response is not None:
             self.connected_address = addr
             self.connected_freq = freq
-            print(f'connected to {self.connected_address} {self.start_freq + self.connected_freq}MHz')
             return addr
         else:
-            print("connection attempt failed")
             return None
 
-    def accept(self):
+    def accept(self) -> int | None:
+        self.clear_buffer()
         listen = None
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
@@ -343,7 +331,7 @@ class LoRa_socket:
         self.connected_address = int(data[0])
         self.connected_freq = int(data[1])
         self.__send_ack(listen.packet_num)
-        print(f'accepted connection request from {self.connected_address}, {self.start_freq + self.connected_freq}')
+        return self.connected_address
 
     def __get_channel_rssi(self):
         GPIO.output(self.M1, GPIO.LOW)

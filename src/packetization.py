@@ -15,8 +15,8 @@ class Packet:
     CRC = crc.CRC()
     USE_CRC:bool = True # Temporary while we test with/without crc
     INT_LEN:int = 16 # used for decoding, in bits
-    # Total Packet size (in bytes) = payload + packet_num + total_packets + crc + is_ack = BUF_SZ
-    PACKET_DATA_SZ:int = BUF_SZ - 1 - (2 * math.ceil(INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
+    # Total Packet size (in bytes) = payload + packet_num + total_packets + crc + is_ack = BUF_SZ-packet_len (2 bytes)
+    PACKET_DATA_SZ:int = (BUF_SZ-2) - 1 - (2 * math.ceil(INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
     
     # Constructor
     # If is_ack is true, total_packets and payload are not used
@@ -143,7 +143,6 @@ class Frame:
         payload_bits.frombytes(payload)
         packets:List[Packet] = []
         bit_per_packet = Packet.PACKET_DATA_SZ * 8
-        print(f'Creating {total_packets} packets with {Packet.PACKET_DATA_SZ} bytes of data in each packet.')
         for i in range(total_packets):
             packets.append(Packet(False, i, total_packets, payload_bits[i*bit_per_packet:min(len(payload_bits), (i+1)*bit_per_packet)].tobytes()))
         return packets    
