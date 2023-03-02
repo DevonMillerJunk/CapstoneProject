@@ -40,7 +40,8 @@ def run_test(arguments):
                     node.send(message.encode(), conn_addr)
                     received_message = node.recv(5)
                     if received_message is not None:
-                        print(f'Received Message: {received_message[0].decode()}')
+                        (recv_payload, _) = received_message
+                        print(f'Received Message: {recv_payload.decode()}')
                     else:
                         print("Did not receive a response")
                     time.sleep(1)

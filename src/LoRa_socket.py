@@ -289,7 +289,7 @@ class LoRa_socket:
     # Note: timeout is between consecutive packets, could take multiples of the timeout
     def recv(self, timeout: float = 1) -> 'Tuple[bytes, int] | None':
         (res, addr, freq, _, _) = self.__receive(timeout)
-        if (res != None):
+        if res is not None and addr is not None and freq is not None:
             self.connected_address = addr
             self.connected_freq = freq
             self.__send_ack(res.packet_num, addr)
