@@ -210,7 +210,7 @@ class LoRa_socket:
     def __send_ack(self, packet_num: int, address: int) -> None:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
-    def send(self, payload: bytes, address: int=connected_address) -> None:
+    def send(self, payload: bytes, address: int) -> None:
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
         
@@ -227,15 +227,19 @@ class LoRa_socket:
                     self.__send_packet(address, packet)
             
             # Remove all acks from buffer
+            print("After send: waiting for acks")
             while len(unacked_packets) > 0:
-                (response, _, _, _, _) = self.__receive(4 if self.rssi else 1)
-                if response is not None and response.is_ack == True:
+                (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
+                
+                if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.remove(response.packet_num)
                 else:
                     break
+            print("After waiting for acks")
             retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
+            raise Exception("Error: Unable to transmit full payload")
         else:
             print(f'Payload delivered. {retries} retries occurred.')
      
@@ -276,7 +280,6 @@ class LoRa_socket:
                 return (packet, address, freq, pkt_rssi, channel_rssi)
             except Exception as e:
                 print(f'Error Occurred Decoding Packet: {e}')
-                return (None, None, None, None, None)
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
