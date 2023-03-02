@@ -39,12 +39,12 @@ def run_test(arguments):
                     print(f'Sending: {message}')
                     node.send(message.encode(), conn_addr)
                     print("Waiting on response")
-                    received_message = node.recv(5)
+                    received_message = node.recv(10)
                     if received_message is not None:
                         print(f'Received Message: {received_message[0].decode()}')
                     else:
                         print("Did not receive a response")
-                    time.sleep(2)
+                    time.sleep(5)
             else:
                 print("Unable to establish connection. Closing program")
         else:
@@ -55,7 +55,7 @@ def run_test(arguments):
                 if received_message is not None:
                     (payload, addr) = received_message
                     print(f'Received Message: {payload.decode()}')
-                    time.sleep(0.5)
+                    time.sleep(5)
                     return_msg = f'RETURN TO SENDER-{payload.decode()}'
                     print(f'Sending: {return_msg}')
                     node.send(return_msg.encode(), addr)
