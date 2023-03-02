@@ -322,7 +322,7 @@ class LoRa_socket:
         else:
             return None
 
-    def accept(self) -> int | None:
+    def accept(self) -> 'int | None':
         self.clear_buffer()
         listen = None
         while listen is None or listen.is_ack == True:
