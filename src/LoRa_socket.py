@@ -219,7 +219,7 @@ class LoRa_socket:
         for packet in packets:
             unacked_packets.add(packet.packet_num)
         retries = -1
-        while len(unacked_packets) > 0 and retries <= self.max_retries:
+        while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send all un_acked packets
             for packet in packets:
                 if packet.packet_num in unacked_packets:
@@ -292,11 +292,13 @@ class LoRa_socket:
                     (res, addr, _, _, _) = self.__receive(timeout)
                     if res != None and addr == self.connected_address and res.is_ack == False:
                         frame.append(res)
+                        self.__send_ack(res.packet_num)
                     else:
                         # Couldn't retrieve package in timeout, exiting
                         print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
                         break
                 if frame.all_packets_recv():
+                    print(f'Received all {frame.total_packets} packets')
                     return (frame.get_payload(), self.connected_address)
             except Exception as e:
                 print(f'Error Occurred Decoding Frame: {e}')
