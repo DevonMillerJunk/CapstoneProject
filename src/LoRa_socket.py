@@ -227,7 +227,6 @@ class LoRa_socket:
                     self.__send_packet(address, packet)
             
             # Remove all acks from buffer
-            print("After send: waiting for acks")
             while len(unacked_packets) > 0:
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 
@@ -235,13 +234,10 @@ class LoRa_socket:
                     unacked_packets.remove(response.packet_num)
                 else:
                     break
-            print("After waiting for acks")
             retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
             raise Exception("Error: Unable to transmit full payload")
-        else:
-            print(f'Payload delivered. {retries} retries occurred.')
      
     # Clears the serial buffer incase of packets in progress
     def clear_ser(self) -> None:
@@ -328,7 +324,6 @@ class LoRa_socket:
                         print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
                         break
                 if frame.all_packets_recv():
-                    print(f'Received all {frame.total_packets} packets')
                     return (frame.get_payload(), self.connected_address)
             except Exception as e:
                 print(f'Error Occurred Decoding Frame: {e}')
