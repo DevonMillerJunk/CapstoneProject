@@ -190,6 +190,7 @@ class LoRa_socket:
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, packet: Packet) -> None:
+        print(f'Send packet {packet.get_packet_num()}')
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
@@ -208,6 +209,7 @@ class LoRa_socket:
         self.__raw_send(data)
 
     def __send_ack(self, packet_num: int, address: int) -> None:
+        print(f'Send ack {packet_num}')
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
