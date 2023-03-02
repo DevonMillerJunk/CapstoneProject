@@ -219,7 +219,6 @@ class LoRa_socket:
         for packet in packets:
             unacked_packets.add(packet.packet_num)
         retries = -1
-        self.clear_buffer()
         while len(unacked_packets) > 0 and retries <= self.max_retries:
             # Send all un_acked packets
             for packet in packets:
@@ -262,7 +261,6 @@ class LoRa_socket:
             freq = r_buff[2]
             msg_len = r_buff[3]
             msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
-            packet = Packet.decode(msg)
             pkt_rssi = None
             channel_rssi = None
 
@@ -271,10 +269,13 @@ class LoRa_socket:
                 pkt_rssi = (256 - r_buff[-1:][0])*-1
                 channel_rssi = self.__get_channel_rssi()
                 print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
-                
-            return (packet, address, freq, pkt_rssi, channel_rssi)
-        else:
-            return (None, None, None, None, None)
+            
+            try:
+                packet = Packet.decode(msg)
+                return (packet, address, freq, pkt_rssi, channel_rssi)
+            except Exception as e:
+                print(f'Error Occurred Decoding Packet: {e}')
+        return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
     # Returns: payload, address
@@ -285,16 +286,20 @@ class LoRa_socket:
             self.connected_address = addr
             self.connected_freq = freq
             self.__send_ack(res.packet_num)
-            frame: Frame = Frame(res)
-            while frame.all_packets_recv() == False:
-                (res, addr, _, _, _) = self.__receive(timeout)
-                if res != None and addr == self.connected_address and res.is_ack == False:
-                    frame.append(res)
-                else:
-                    # Couldn't retrieve package in timeout, exiting
-                    print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
-                    break
-            return (frame.get_payload(), self.connected_address) if frame.all_packets_recv() else None
+            try:
+                frame: Frame = Frame(res)
+                while frame.all_packets_recv() == False:
+                    (res, addr, _, _, _) = self.__receive(timeout)
+                    if res != None and addr == self.connected_address and res.is_ack == False:
+                        frame.append(res)
+                    else:
+                        # Couldn't retrieve package in timeout, exiting
+                        print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
+                        break
+                if frame.all_packets_recv():
+                    return (frame.get_payload(), self.connected_address)
+            except Exception as e:
+                print(f'Error Occurred Decoding Frame: {e}')
         return None
 
     def connect(self) -> 'int | None':
@@ -307,7 +312,6 @@ class LoRa_socket:
         addr = None
         freq = None
         while curr_retry <= self.max_retries:
-            self.clear_buffer()
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
@@ -323,7 +327,6 @@ class LoRa_socket:
             return None
 
     def accept(self) -> 'int | None':
-        self.clear_buffer()
         listen = None
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
