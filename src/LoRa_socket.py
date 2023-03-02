@@ -6,8 +6,10 @@ import serial
 import time
 import constants
 import settings as s
-import util as u
+import math
 from packetization import Packet, Frame
+from bitarray import bitarray
+from bitarray.util import ba2int, int2ba
 
 
 class LoRa_socket:
@@ -179,7 +181,8 @@ class LoRa_socket:
 
     def __encode_data__(self, packet: Packet) -> bytes:
         encoding: bytes = packet.encode()
-        return bytes([len(encoding)]) + encoding
+        print(f'Packet num {packet.get_packet_num()} has encoded length: {len(encoding)}')
+        return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
         self.ser.write(data)
@@ -274,13 +277,18 @@ class LoRa_socket:
         retry_num = -1
         while retry_num < 10:
             # Decode Header
-            msg_hdr_buffer = self.__read_ser(4, timeout)
-            if msg_hdr_buffer is None or len(msg_hdr_buffer) != 4:
+            hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
+            msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
+            if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
                 return (None, None, None, None, None)
             
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
             freq = msg_hdr_buffer[2]
-            msg_len = msg_hdr_buffer[3]
+            
+            bits:bitarray = bitarray()
+            bits.frombytes(msg_hdr_buffer[3:hdr_len])
+            msg_len:int = ba2int(bits)
+            print(f'Decoded msg length of {msg_len}')
             
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
