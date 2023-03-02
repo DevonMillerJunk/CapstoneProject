@@ -35,7 +35,9 @@ def run_test(arguments):
             if conn_addr is not None:
                 print("Connection established. Moving on to sending:")
                 while True:
-                    node.send(f'Temp is {u.get_cpu_temp()} deg C'.encode(), conn_addr)
+                    message = f'Temp is {u.get_cpu_temp()} deg C'
+                    print(f'Sending: {message}')
+                    node.send(message.encode(), conn_addr)
                     received_message = node.recv(5)
                     if received_message is not None:
                         print(f'Received Message: {received_message[0].decode()}')
@@ -52,7 +54,9 @@ def run_test(arguments):
                 if received_message is not None:
                     (payload, addr) = received_message
                     print(f'Received Message: {payload.decode()}')
-                    node.send(f'RETURN TO SENDER-{payload.decode()}'.encode(), addr)
+                    return_msg = f'RETURN TO SENDER-{payload.decode()}'
+                    print(f'Sending: {return_msg}')
+                    node.send(return_msg.encode(), addr)
                 else:
                     print("Did not receive a message")
 
