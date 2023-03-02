@@ -57,6 +57,7 @@ def run_test(arguments):
                     return_msg = f'RETURN TO SENDER-{payload.decode()}'
                     print(f'Sending: {return_msg}')
                     node.send(return_msg.encode(), addr)
+                    print(f'Delivered')
                 else:
                     print("Did not receive a message")
 
