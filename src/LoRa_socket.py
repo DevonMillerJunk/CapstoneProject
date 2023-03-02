@@ -282,6 +282,7 @@ class LoRa_socket:
                 except Exception as e:
                     # Try to decode another packet
                     print(f'Error Occurred Decoding Packet: {e}')
+        print("Returning all nones from __recieve")
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
