@@ -208,7 +208,6 @@ class LoRa_socket:
         self.__raw_send(data)
 
     def __send_ack(self, packet_num: int, address: int) -> None:
-        print(f'Sending ack: {packet_num} to address {address}')
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int=connected_address) -> None:
@@ -220,13 +219,13 @@ class LoRa_socket:
         for packet in packets:
             unacked_packets.add(packet.packet_num)
         retries = -1
+        self.clear_buffer()
         while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send all un_acked packets
             for packet in packets:
                 if packet.packet_num in unacked_packets:
                     self.__send_packet(address, packet)
             
-            print(f'Waiting on acks: {unacked_packets}')
             # Remove all acks from buffer
             while len(unacked_packets) > 0:
                 (response, _, _, _, _) = self.__receive(4 if self.rssi else 1)
@@ -316,6 +315,7 @@ class LoRa_socket:
         addr = None
         freq = None
         while curr_retry <= self.max_retries:
+            self.clear_buffer()
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
@@ -331,6 +331,7 @@ class LoRa_socket:
             return None
 
     def accept(self) -> 'int | None':
+        self.clear_buffer()
         listen = None
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()

@@ -38,28 +38,24 @@ def run_test(arguments):
                     message = f'Temp is {u.get_cpu_temp()} deg C'
                     print(f'Sending: {message}')
                     node.send(message.encode(), conn_addr)
-                    print("Waiting on response")
-                    received_message = node.recv(10)
+                    received_message = node.recv(5)
                     if received_message is not None:
                         print(f'Received Message: {received_message[0].decode()}')
                     else:
                         print("Did not receive a response")
-                    time.sleep(5)
             else:
                 print("Unable to establish connection. Closing program")
         else:
             print("attempting to establish connection, listening for nearby nodes")
             node.accept()
             while True:
-                received_message = node.recv(10)
+                received_message = node.recv(5)
                 if received_message is not None:
                     (payload, addr) = received_message
                     print(f'Received Message: {payload.decode()}')
-                    time.sleep(5)
                     return_msg = f'RETURN TO SENDER-{payload.decode()}'
                     print(f'Sending: {return_msg}')
                     node.send(return_msg.encode(), addr)
-                    print(f'Delivered')
                 else:
                     print("Did not receive a message")
 
