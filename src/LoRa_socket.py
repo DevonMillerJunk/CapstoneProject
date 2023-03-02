@@ -51,7 +51,7 @@ class LoRa_socket:
         GPIO.output(self.M1, GPIO.HIGH)
 
         # The hardware UART of Pi3B+,Pi4B is /dev/ttyS0
-        self.ser = serial.Serial(serial_num, 9600)
+        self.ser = serial.Serial(port=serial_num, baudrate=9600, timeout=1)
         self.ser.flushInput()
         self.set(freq, addr, power, rssi, air_speed, net_id, buffer_size,
                  crypt, relay, lbt, wor)
@@ -219,7 +219,7 @@ class LoRa_socket:
         for packet in packets:
             unacked_packets.add(packet.packet_num)
         retries = -1
-        self.clear_buffer()
+        self.clear_ser()
         while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send all un_acked packets
             for packet in packets:
@@ -244,46 +244,67 @@ class LoRa_socket:
             print(f'Payload delivered. {retries} retries occurred.')
      
     # Clears the serial buffer incase of packets in progress
-    def clear_buffer(self) -> None:
+    def clear_ser(self) -> None:
         self.ser.read(self.ser.inWaiting())
+        
+    # Read from SER in the safe way
+    def __read_ser(self, num_bytes: int, timeout: float = 1.0) -> 'bytes | None':
+        check_period: float = 0.005
+        curr_time: float = 0.0
+        while self.ser.inWaiting() < num_bytes and curr_time < timeout:
+            time.sleep(check_period)
+            curr_time += check_period
+            
+        if self.ser.inWaiting() < num_bytes:
+            return None
+                    
+        chunk_size = 200
+        read_buffer = b''
+        while len(read_buffer) < num_bytes:
+            # Read in chunks. Each chunk will wait as long as specified by
+            # timeout. Increase chunk_size to fail quicker
+            byte_chunk = self.ser.read(size=min(chunk_size, num_bytes - len(read_buffer)))
+            read_buffer += byte_chunk
+            if not len(byte_chunk) == chunk_size:
+                break
+
+        return read_buffer
+            
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
-        check_period = 0.005
-        curr_time: float = 0
-        while curr_time <= timeout:
-            if (timeout > 0):
-                while self.ser.inWaiting() <= 0 and curr_time < timeout:
-                    time.sleep(check_period)
-                    curr_time += check_period
-            if self.ser.inWaiting() > 0:
-                # TODO: remove after testing
-                time.sleep(0.05)
-                
-                #TODO: may potentially require a loop while reading from ser
-                # in the case that part of the message arrived
-                r_buff: bytes = self.ser.read(self.ser.inWaiting())
-                address = int.from_bytes(r_buff[0:2], "big")
-                freq = r_buff[2]
-                msg_len = r_buff[3]
-                msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
-                pkt_rssi = None
-                channel_rssi = None
+        retry_num = -1
+        while retry_num < 10:
+            # Decode Header
+            msg_hdr_buffer = self.__read_ser(4, timeout)
+            if msg_hdr_buffer is None or len(msg_hdr_buffer) != 4:
+                return (None, None, None, None, None)
+            
+            address = int.from_bytes(msg_hdr_buffer[0:2], "big")
+            freq = msg_hdr_buffer[2]
+            msg_len = msg_hdr_buffer[3]
+            
+            # Decode Payload
+            msg_payload_buffer = self.__read_ser(msg_len, timeout)
+            if msg_payload_buffer is None:
+                return (None, None, None, None, None)
+            
+            pkt_rssi = None
+            channel_rssi = None
 
-                # print the rssi
-                if self.rssi:
-                    pkt_rssi = (256 - r_buff[-1:][0])*-1
-                    channel_rssi = self.__get_channel_rssi()
-                    print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
-                
-                try:
-                    packet = Packet.decode(msg)
-                    return (packet, address, freq, pkt_rssi, channel_rssi)
-                except Exception as e:
-                    # Try to decode another packet
-                    print(f'Error Occurred Decoding Packet: {e}')
-                    return (None, None, None, None, None)
-        print("Returning all nones from __recieve")
+            # print the rssi
+            if self.rssi:
+                pkt_rssi = (256 - msg_payload_buffer[-1:][0])*-1
+                channel_rssi = self.__get_channel_rssi()
+                print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
+            
+            try:
+                packet = Packet.decode(msg_payload_buffer)
+                return (packet, address, freq, pkt_rssi, channel_rssi)
+            except Exception as e:
+                # Try to decode another packet
+                print(f'Error Occurred Decoding Packet: {e}')
+            retry_num += 1
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
@@ -323,7 +344,7 @@ class LoRa_socket:
         addr = None
         freq = None
         while curr_retry <= self.max_retries:
-            self.clear_buffer()
+            self.clear_ser()
             self.__broadcast_packet(packet)
             (res, addr, freq, _, _) = self.__receive(retryPeriod)
             if not res or res.is_ack == False or res.packet_num != packet.packet_num:
@@ -339,7 +360,7 @@ class LoRa_socket:
             return None
 
     def accept(self) -> 'int | None':
-        self.clear_buffer()
+        self.clear_ser()
         listen = None
         while listen is None or listen.is_ack == True:
             (listen, _, _, _, _) = self.__receive()
