@@ -250,36 +250,38 @@ class LoRa_socket:
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
         check_period = 0.005
-        if (timeout > 0):
-            curr_time: float = 0
-            while self.ser.inWaiting() <= 0 and curr_time < timeout:
-                time.sleep(check_period)
-                curr_time += check_period
-        if self.ser.inWaiting() > 0:
-            # TODO: remove after testing
-            time.sleep(0.05)
-            
-            #TODO: may potentially require a loop while reading from ser
-            # in the case that part of the message arrived
-            r_buff: bytes = self.ser.read(self.ser.inWaiting())
-            address = int.from_bytes(r_buff[0:2], "big")
-            freq = r_buff[2]
-            msg_len = r_buff[3]
-            msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
-            pkt_rssi = None
-            channel_rssi = None
+        curr_time: float = 0
+        while curr_time <= timeout:
+            if (timeout > 0):
+                while self.ser.inWaiting() <= 0 and curr_time < timeout:
+                    time.sleep(check_period)
+                    curr_time += check_period
+            if self.ser.inWaiting() > 0:
+                # TODO: remove after testing
+                time.sleep(0.05)
+                
+                #TODO: may potentially require a loop while reading from ser
+                # in the case that part of the message arrived
+                r_buff: bytes = self.ser.read(self.ser.inWaiting())
+                address = int.from_bytes(r_buff[0:2], "big")
+                freq = r_buff[2]
+                msg_len = r_buff[3]
+                msg = r_buff[4:min(len(r_buff), 4 + msg_len)]
+                pkt_rssi = None
+                channel_rssi = None
 
-            # print the rssi
-            if self.rssi:
-                pkt_rssi = (256 - r_buff[-1:][0])*-1
-                channel_rssi = self.__get_channel_rssi()
-                print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
-            
-            try:
-                packet = Packet.decode(msg)
-                return (packet, address, freq, pkt_rssi, channel_rssi)
-            except Exception as e:
-                print(f'Error Occurred Decoding Packet: {e}')
+                # print the rssi
+                if self.rssi:
+                    pkt_rssi = (256 - r_buff[-1:][0])*-1
+                    channel_rssi = self.__get_channel_rssi()
+                    print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
+                
+                try:
+                    packet = Packet.decode(msg)
+                    return (packet, address, freq, pkt_rssi, channel_rssi)
+                except Exception as e:
+                    # Try to decode another packet
+                    print(f'Error Occurred Decoding Packet: {e}')
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
