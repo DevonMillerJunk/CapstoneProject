@@ -117,9 +117,9 @@ class LoRa_socket:
             self.ser.write(bytes(self.cfg_reg))
             r_buff = 0
             time.sleep(0.2)
-            if self.ser.inWaiting() > 0:
+            if self.ser.in_waiting() > 0:
                 time.sleep(0.1)
-                r_buff = self.ser.read(self.ser.inWaiting())
+                r_buff = self.ser.read(self.ser.in_waiting())
                 if r_buff[0] == 0xC1:
                     print("parameters setting is :", end='')
                     for i in self.cfg_reg:
@@ -154,9 +154,9 @@ class LoRa_socket:
 
         # send command to get setting parameters
         self.ser.write(bytes([0xC1, 0x00, 0x09]))
-        if self.ser.inWaiting() > 0:
+        if self.ser.in_waiting() > 0:
             time.sleep(0.1)
-            self.get_reg = self.ser.read(self.ser.inWaiting())
+            self.get_reg = self.ser.read(self.ser.in_waiting())
 
         # check the return characters from hat and print the setting parameters
         if self.get_reg[0] == 0xC1 and self.get_reg[2] == 0x09:
@@ -247,17 +247,18 @@ class LoRa_socket:
      
     # Clears the serial buffer incase of packets in progress
     def clear_ser(self) -> None:
-        self.ser.read(self.ser.inWaiting())
+        self.ser.read(self.ser.in_waiting())
         
     # Read from SER in the safe way
+    # TODO: try using read_until(expected=LF, size=None)
     def __read_ser(self, num_bytes: int, timeout: float = 1.0) -> 'bytes | None':
         check_period: float = 0.005
         curr_time: float = 0.0
-        while self.ser.inWaiting() < num_bytes and curr_time < timeout:
+        while self.ser.in_waiting() < num_bytes and curr_time < timeout:
             time.sleep(check_period)
             curr_time += check_period
             
-        if self.ser.inWaiting() < num_bytes:
+        if self.ser.in_waiting() < num_bytes:
             return None
                     
         chunk_size = 200
@@ -302,8 +303,8 @@ class LoRa_socket:
             channel_rssi = None
             
             # Decode RSSI value appended to sent package
-            print(f'There is {self.ser.inWaiting()} bytes waiting')
-            rssi_payload = self.__read_ser(2, timeout)
+            print(f'There is {self.ser.in_waiting()} bytes waiting')
+            rssi_payload = self.__read_ser(1, timeout)
 
             # print the rssi
             if self.rssi and rssi_payload is not None:
@@ -391,9 +392,9 @@ class LoRa_socket:
         self.ser.write(bytes([0xC0, 0xC1, 0xC2, 0xC3, 0x00, 0x02]))
         time.sleep(0.5)
         re_temp = bytes(5)
-        if self.ser.inWaiting() > 0:
+        if self.ser.in_waiting() > 0:
             time.sleep(0.1)
-            re_temp = self.ser.read(self.ser.inWaiting())
+            re_temp = self.ser.read(self.ser.in_waiting())
         if re_temp[0] == 0xC1 and re_temp[1] == 0x00 and re_temp[2] == 0x02:
             channel_rssi = (256 - re_temp[3])*-1
             print("the current noise rssi value: -{0}dBm".format(256 -
