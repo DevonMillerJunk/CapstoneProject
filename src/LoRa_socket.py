@@ -251,7 +251,7 @@ class LoRa_socket:
         
     # Read from SER in the safe way
     # TODO: try using read_until(expected=LF, size=None)
-    def __read_ser(self, num_bytes: int, timeout: float = 1.0) -> 'bytes | None':
+    def __read_ser(self, num_bytes: int, timeout: float = 1.0, start_hint: bytes = None) -> 'bytes | None':
         check_period: float = 0.005
         curr_time: float = 0.0
         while self.ser.in_waiting < num_bytes and curr_time < timeout:
@@ -263,6 +263,13 @@ class LoRa_socket:
                     
         chunk_size = 200
         read_buffer = b''
+        
+        if start_hint is not None:
+            temp_buffer = self.ser.read_until(start_hint)
+            # TODO: Need to check and see if it received the hint too
+            if len(temp_buffer) is not None:
+                read_buffer += start_hint
+        
         while len(read_buffer) < num_bytes:
             # Read in chunks. Each chunk will wait as long as specified by
             # timeout. Increase chunk_size to fail quicker
@@ -275,12 +282,12 @@ class LoRa_socket:
             
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
-    def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
+    def __receive(self, timeout: float = 1, start_hint: bytes = None) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
         retry_num = -1
         while retry_num < 10:
             # Decode Header
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
-            msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
+            msg_hdr_buffer = self.__read_ser(hdr_len, timeout, start_hint)
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
                 return (None, None, None, None, None)
             
@@ -293,32 +300,37 @@ class LoRa_socket:
             msg_len:int = ba2int(bits)
             print(f'Decoded msg length of {msg_len}')
             
-            # Decode Payload
-            msg_payload_buffer = self.__read_ser(msg_len, timeout)
-            if msg_payload_buffer is None:
-                return (None, None, None, None, None)
-            
-            print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
-            pkt_rssi = None
-            channel_rssi = None
-            
-            # Decode RSSI value appended to sent package
-            print(f'There is {self.ser.in_waiting} bytes waiting')
-            rssi_payload = self.__read_ser(1, timeout)
+            if msg_len > Packet.MAX_PACKET_SZ:
+                print("Received invalid msg_len, trying again")
+            else:
+                # Decode Payload
+                msg_payload_buffer = self.__read_ser(msg_len, timeout)
+                if msg_payload_buffer is None:
+                    return (None, None, None, None, None)
+                
+                print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
+                pkt_rssi = None
+                channel_rssi = None
+                
+                # Decode RSSI value appended to sent package
+                print(f'There is {self.ser.in_waiting} bytes waiting')
+                rssi_payload = None
+                if self.ser.in_waiting >= 1:
+                    rssi_payload = self.__read_ser(1, timeout)
 
-            # print the rssi
-            if self.rssi and rssi_payload is not None:
-                print(f'Payload Buffer: ${rssi_payload.hex()}')
-                pkt_rssi = (256 - rssi_payload[-1:][0])*-1
-                channel_rssi = self.__get_channel_rssi()
-                print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
-            
-            try:
-                packet = Packet.decode(msg_payload_buffer)
-                return (packet, address, freq, pkt_rssi, channel_rssi)
-            except Exception as e:
-                # Try to decode another packet
-                print(f'Error Occurred Decoding Packet: {e}')
+                # print the rssi
+                if self.rssi and rssi_payload is not None:
+                    print(f'Payload Buffer: ${rssi_payload.hex()}')
+                    pkt_rssi = (256 - rssi_payload[-1:][0])*-1
+                    channel_rssi = self.__get_channel_rssi()
+                    print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
+                
+                try:
+                    packet = Packet.decode(msg_payload_buffer)
+                    return (packet, address, freq, pkt_rssi, channel_rssi)
+                except Exception as e:
+                    # Try to decode another packet
+                    print(f'Error Occurred Decoding Packet: {e}')
             retry_num += 1
         return (None, None, None, None, None)
 
