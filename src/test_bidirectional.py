@@ -38,6 +38,7 @@ def run_test(arguments):
                     message = f'Temp is {u.get_cpu_temp()} deg C. Long Tail Message: {u.genLongLoremIpsom()}'
                     print(f'Sending: {message}')
                     node.send(message.encode(), conn_addr)
+                    print("Moving on to receive")
                     received_message = node.recv(5)
                     if received_message is not None:
                         (recv_payload, _) = received_message
