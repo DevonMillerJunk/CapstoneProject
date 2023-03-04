@@ -88,13 +88,15 @@ class LoRa_socket:
         # get crypt
         l_crypt = crypt & 0xff
         h_crypt = crypt >> 8 & 0xff
+        
+        rssi_val = 0x20 if self.rssi else 0x00
 
         if relay == False:
             self.cfg_reg[3] = high_addr
             self.cfg_reg[4] = low_addr
             self.cfg_reg[5] = net_id_temp
             self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
-            self.cfg_reg[7] = buffer_size + power + 0x20
+            self.cfg_reg[7] = buffer_size + power + rssi_val
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x43 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -104,7 +106,7 @@ class LoRa_socket:
             self.cfg_reg[4] = 0x02
             self.cfg_reg[5] = 0x03
             self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
-            self.cfg_reg[7] = buffer_size + power + 0x20
+            self.cfg_reg[7] = buffer_size + power + rssi_val
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x03 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -317,6 +319,7 @@ class LoRa_socket:
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
+                print("Unable to receive msg payload")
                 continue
             
             print(f'Payload Buffer: ${msg_payload_buffer.hex()}')

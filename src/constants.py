@@ -33,6 +33,7 @@ SX126X_Power_10dBm = 0x03
 FREQ = 915
 
 # Air Speed (I *THINK* this is bit rate (kbps))
+# TODO: try higher air speed
 LORA_AIR_SPEED_DIC = {
     1200: 0x01,
     2400: 0x02,
@@ -64,3 +65,5 @@ BUF_SZ = LORA_BUF_SZ_DIC.get(s.BUF_SZ)
 # RSSI (receive signal strength indicator)
 RSSI = s.RSSI
 RSSI_VAL = 0x80 if RSSI else 0x00
+
+# DODO: add in WOR cycle
