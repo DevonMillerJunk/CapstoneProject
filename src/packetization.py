@@ -17,7 +17,7 @@ class Packet:
     USE_CRC:bool = True # Temporary while we test with/without crc
     INT_LEN:int = 16 # used for decoding, in bits
     # MAX_PACKET_SZ (bytes) should be <= BUF_SZ - 5 (header length)
-    MAX_PACKET_SZ: int = 230 #BUF_SZ - 5 
+    MAX_PACKET_SZ: int = 235 #BUF_SZ - 5 
     # Total Packet size (MAX_PACKET_SZ) = payload + packet_num + total_packets + crc + is_ack (in bytes)
     PACKET_DATA_SZ:int = (MAX_PACKET_SZ) - 1 - (2 * math.ceil(INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
     
