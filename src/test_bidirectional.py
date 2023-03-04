@@ -35,7 +35,7 @@ def run_test(arguments):
             if conn_addr is not None:
                 print("Connection established. Moving on to sending:")
                 while True:
-                    message = f'Temp is {u.get_cpu_temp()} deg C. Long Tail Message: {u.genLongLoremIpsom()}'
+                    message = f'Temp is {u.get_cpu_temp()} deg C.'
                     print(f'Sending: {message}')
                     node.send(message.encode(), conn_addr)
                     received_message = node.recv(5)
