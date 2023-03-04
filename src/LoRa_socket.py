@@ -217,6 +217,7 @@ class LoRa_socket:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
+        batch_sz = 2
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
         
@@ -227,10 +228,11 @@ class LoRa_socket:
         retries = -1
         self.clear_ser()
         while len(unacked_packets) > 0 and retries < self.max_retries:
-            # Send all un_acked packets
-            for packet in packets:
-                if packet.packet_num in unacked_packets:
-                    self.__send_packet(address, packet)
+            # Send up to batch_sz un_acked packets
+            packets_to_send = [packet for packet in packets if packet.packet_num in unacked_packets]
+            for i in range(min(batch_sz, len(packets_to_send))):
+                    self.__send_packet(address, packets_to_send[i])
+                    time.sleep(0.1)
             
             # Remove all acks from buffer
             while len(unacked_packets) > 0:
