@@ -293,6 +293,7 @@ class LoRa_socket:
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
         retry_num = -1
         while retry_num < 10:
+            retry_num += 1
             # Decode Header
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
             msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
@@ -341,8 +342,6 @@ class LoRa_socket:
             except Exception as e:
                 # Try to decode another packet
                 print(f'Error Occurred Decoding Packet: {e}')
-                
-            retry_num += 1
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
@@ -376,7 +375,7 @@ class LoRa_socket:
         payload: str = str(self.addr) + "," + str(self.offset_freq)
         packet = Packet(False, 0, 1, payload.encode())
         
-        curr_retry = 0
+        curr_retry = -1
         response = None
         addr = None
         freq = None
