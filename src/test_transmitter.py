@@ -19,9 +19,10 @@ import LoRa_socket
 import time
 import util as u
 
-# Call with test_transmitter {addr}
+# Call with test_transmitter {addr} {test_time} (in sec)
 def run_test(arguments):
     arg_addr = int(arguments[1])
+    test_duration = float(arguments[2])
     node = LoRa_socket.LoRa_socket(addr=arg_addr)
     try:
         print("attempting to establish connection, broadcasting to nearby nodes")
@@ -30,9 +31,16 @@ def run_test(arguments):
             raise Exception("Unable to establish connection. Closing program")
             
         print(f'Connection established to node {conn_addr}')
-        while True:
-            message = f'Temp is {u.get_cpu_temp()} deg C. Long Tail Message: {u.genLongLoremIpsom()}'
+        message = f'Temp is {u.get_cpu_temp()} deg C. Long Tail Message: {u.genLongLoremIpsom()}'.encode()
+        message_len_bits = len(message) * 8
+        bits_sent = 0 
+        start_t = time.time()
+        while time.time() - start_t < test_duration:
             node.send(message.encode(), conn_addr)
+            bits_sent += message_len_bits
+        end_t = time.time()
+            
+        print(f'Sent {bits_sent} bits in {end_t - start_t} seconds. {float(bits_sent) / (end_t - start_t)}bps')
     except Exception as e:
         print(e)
 if __name__ == "__main__":

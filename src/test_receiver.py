@@ -30,12 +30,17 @@ def run_test(arguments):
             raise Exception("Unable to establish connection with node")
         print(f'Connected to Node {addr}')
         while True:
-            received_message = node.recv(5)
-            if received_message is not None:
-                (payload, addr) = received_message
-                print(f'Received Message: {payload.decode()}')
-            else:
-                print("Did not receive a message")
+            start_t = time.time()
+            recv_bits = 0
+            while time.time() - start_t < 15.0:
+                received_message = node.recv(2)
+                if received_message is not None:
+                    (payload, addr) = received_message
+                    recv_bits += 8 * payload.decode()
+                else:
+                    print("Did not receive a message")
+            end_t = time.time()
+            print(f'Received {recv_bits} bits in {end_t - start_t} seconds. {float(recv_bits) / (end_t - start_t)}bps')
     except Exception as e:
         print(e)
 
