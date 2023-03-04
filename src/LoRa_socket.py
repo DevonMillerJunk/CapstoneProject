@@ -216,10 +216,9 @@ class LoRa_socket:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
-        batch_sz = 2
+        batch_sz = 1
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
-        print(f'Sending {len(packets)} packets')
         
         # Send Packets
         unacked_packets = set()
@@ -237,14 +236,10 @@ class LoRa_socket:
                     sent_packets += 1
                     self.__send_packet(address, packet)
                     unsent_packets.remove(packet.packet_num)
-                    if sent_packets < batch_sz:
-                        time.sleep(1) # TODO: remove
             
             # Remove all acks from buffer
             while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
-                print(f'Got response of: {response}')
-                
                 if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.remove(response.packet_num)
                 else:
