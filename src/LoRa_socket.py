@@ -88,13 +88,15 @@ class LoRa_socket:
         # get crypt
         l_crypt = crypt & 0xff
         h_crypt = crypt >> 8 & 0xff
+        
+        rssi_val = 0x20 if self.rssi else 0x00
 
         if relay == False:
             self.cfg_reg[3] = high_addr
             self.cfg_reg[4] = low_addr
             self.cfg_reg[5] = net_id_temp
             self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
-            self.cfg_reg[7] = buffer_size + power + 0x20
+            self.cfg_reg[7] = buffer_size + power + rssi_val
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x43 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -104,7 +106,7 @@ class LoRa_socket:
             self.cfg_reg[4] = 0x02
             self.cfg_reg[5] = 0x03
             self.cfg_reg[6] = constants.SX126X_UART_BAUDRATE_9600 + air_speed
-            self.cfg_reg[7] = buffer_size + power + 0x20
+            self.cfg_reg[7] = buffer_size + power + rssi_val
             self.cfg_reg[8] = freq_temp
             self.cfg_reg[9] = 0x03 + rssi_temp
             self.cfg_reg[10] = h_crypt
@@ -181,20 +183,16 @@ class LoRa_socket:
 
     def __encode_data__(self, packet: Packet) -> bytes:
         encoding: bytes = packet.encode()
-        print(f'Packet num {packet.get_packet_num()} has encoded length: {len(encoding)}')
-        print(f'Encoded Packet is: {(int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding).hex()}')
         return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
         self.ser.write(data)
-        time.sleep(0.05)
         
     # the sending message format
     #
     # receiving node         receiving node       receiving node      own high 8bit     own low 8bit         own           message
     # high 8bit address      low 8bit address       frequency           address           address          frequency       payload
     def __send_packet(self, address: int, packet: Packet) -> None:
-        print(f'Send packet {packet.get_packet_num()}')
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
@@ -213,34 +211,40 @@ class LoRa_socket:
         self.__raw_send(data)
 
     def __send_ack(self, packet_num: int, address: int) -> None:
-        print(f'Send ack {packet_num}')
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
+        batch_sz = 1
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
         
         # Send Packets
         unacked_packets = set()
+        unsent_packets = set()
         for packet in packets:
             unacked_packets.add(packet.packet_num)
+            unsent_packets.add(packet.packet_num)
         retries = -1
         self.clear_ser()
         while len(unacked_packets) > 0 and retries < self.max_retries:
-            # Send all un_acked packets
+            # Send up to batch_sz un_acked packets
+            sent_packets = 0
             for packet in packets:
-                if packet.packet_num in unacked_packets:
+                if packet.packet_num in unacked_packets and sent_packets < batch_sz:
+                    sent_packets += 1
                     self.__send_packet(address, packet)
+                    unsent_packets.remove(packet.packet_num)
             
             # Remove all acks from buffer
-            while len(unacked_packets) > 0:
+            while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
-                
                 if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.remove(response.packet_num)
                 else:
                     break
-            retries += 1
+                
+            if len(unsent_packets) == 0:
+                retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
             raise Exception("Error: Unable to transmit full payload")
@@ -250,7 +254,6 @@ class LoRa_socket:
         self.ser.read(self.ser.in_waiting)
         
     # Read from SER in the safe way
-    # TODO: try using read_until(expected=LF, size=None)
     def __read_ser(self, num_bytes: int, timeout: float = 1.0) -> 'bytes | None':
         check_period: float = 0.005
         curr_time: float = 0.0
@@ -263,6 +266,14 @@ class LoRa_socket:
                     
         chunk_size = 200
         read_buffer = b''
+        
+        # TODO: look into fixing this
+        # if start_hint is not None:
+        #     temp_buffer = self.ser.read_until(start_hint)
+        #     # TODO: Need to check and see if it received the hint too
+        #     if len(temp_buffer) is not None:
+        #         read_buffer += start_hint
+        
         while len(read_buffer) < num_bytes:
             # Read in chunks. Each chunk will wait as long as specified by
             # timeout. Increase chunk_size to fail quicker
@@ -278,40 +289,44 @@ class LoRa_socket:
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
         retry_num = -1
         while retry_num < 10:
+            retry_num += 1
             # Decode Header
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
             msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
-                return (None, None, None, None, None)
+                continue
             
-            print(f'HDR Buffer: ${msg_hdr_buffer.hex()}')
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
             freq = msg_hdr_buffer[2]
             
             bits:bitarray = bitarray()
             bits.frombytes(msg_hdr_buffer[3:hdr_len])
             msg_len:int = ba2int(bits)
-            print(f'Decoded msg length of {msg_len}')
+            
+            if msg_len > Packet.MAX_PACKET_SZ:
+                # Invalid Msg Length. Must have been an error retrieving from the serial port
+                self.clear_ser()
+                continue
             
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
-                return (None, None, None, None, None)
+                continue
             
-            print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
             pkt_rssi = None
             channel_rssi = None
             
-            # Decode RSSI value appended to sent package
-            print(f'There is {self.ser.in_waiting} bytes waiting')
-            rssi_payload = self.__read_ser(1, timeout)
+            if self.rssi:
+                # Decode RSSI value appended to sent package
+                rssi_payload = None
+                if self.ser.in_waiting >= 1:
+                    rssi_payload = self.__read_ser(1, 0.05)
 
-            # print the rssi
-            if self.rssi and rssi_payload is not None:
-                print(f'Payload Buffer: ${rssi_payload.hex()}')
-                pkt_rssi = (256 - rssi_payload[-1:][0])*-1
-                channel_rssi = self.__get_channel_rssi()
-                print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
+                # print the rssi
+                if rssi_payload is not None:
+                    pkt_rssi = (256 - rssi_payload[-1:][0])*-1
+                    channel_rssi = self.__get_channel_rssi()
+                    print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
             
             try:
                 packet = Packet.decode(msg_payload_buffer)
@@ -319,7 +334,6 @@ class LoRa_socket:
             except Exception as e:
                 # Try to decode another packet
                 print(f'Error Occurred Decoding Packet: {e}')
-            retry_num += 1
         return (None, None, None, None, None)
 
     # Receives one frame (in bytes)
@@ -353,7 +367,7 @@ class LoRa_socket:
         payload: str = str(self.addr) + "," + str(self.offset_freq)
         packet = Packet(False, 0, 1, payload.encode())
         
-        curr_retry = 0
+        curr_retry = -1
         response = None
         addr = None
         freq = None
