@@ -44,7 +44,7 @@ def run_test(arguments):
                         print(f'Received Message: {recv_payload.decode()}')
                     else:
                         print("Did not receive a response")
-                    time.sleep(0.1)
+                    #time.sleep(0.1)
             else:
                 print("Unable to establish connection. Closing program")
         else:
@@ -55,7 +55,7 @@ def run_test(arguments):
                 if received_message is not None:
                     (payload, addr) = received_message
                     print(f'Received Message: {payload.decode()}')
-                    time.sleep(0.1)
+                    #time.sleep(0.1)
                     return_msg = f'RETURN TO SENDER-{payload.decode()}'
                     print(f'Sending: {return_msg}')
                     node.send(return_msg.encode(), addr)
