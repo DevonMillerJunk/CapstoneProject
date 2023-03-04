@@ -317,7 +317,7 @@ class LoRa_socket:
                 print(f'There is {self.ser.in_waiting} bytes waiting')
                 rssi_payload = None
                 if self.ser.in_waiting >= 1:
-                    rssi_payload = self.__read_ser(min(3, self.ser.in_waiting), timeout)
+                    rssi_payload = self.__read_ser(min(3, self.ser.in_waiting), 0.05)
 
                 # print the rssi
                 if self.rssi and rssi_payload is not None:
