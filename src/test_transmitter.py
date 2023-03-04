@@ -33,7 +33,7 @@ def run_test(arguments):
         print(f'Connection established to node {conn_addr}')
         message = f'Temp is {u.get_cpu_temp()} deg C. Long Tail Message: {u.genLongLoremIpsom()}'.encode()
         message_len_bits = len(message) * 8
-        bits_sent = 0 
+        bits_sent: int = 0 
         start_t = time.time()
         while time.time() - start_t < test_duration:
             node.send(message, conn_addr)

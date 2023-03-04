@@ -31,12 +31,12 @@ def run_test(arguments):
         print(f'Connected to Node {addr}')
         while True:
             start_t = time.time()
-            recv_bits = 0
+            recv_bits: int = 0
             while time.time() - start_t < 15.0:
                 received_message = node.recv(2)
                 if received_message is not None:
                     (payload, addr) = received_message
-                    recv_bits += 8 * payload.decode()
+                    recv_bits += 8 * len(payload.decode())
                 else:
                     print("Did not receive a message")
             end_t = time.time()
