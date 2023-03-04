@@ -247,7 +247,8 @@ class LoRa_socket:
      
     # Clears the serial buffer incase of packets in progress
     def clear_ser(self) -> None:
-        self.ser.read(self.ser.in_waiting)
+        f = 1
+        #self.ser.read(self.ser.in_waiting)
         
     # Read from SER in the safe way
     # TODO: try using read_until(expected=LF, size=None)
