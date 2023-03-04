@@ -36,7 +36,7 @@ def run_test(arguments):
         bits_sent = 0 
         start_t = time.time()
         while time.time() - start_t < test_duration:
-            node.send(message.encode(), conn_addr)
+            node.send(message, conn_addr)
             bits_sent += message_len_bits
         end_t = time.time()
             
