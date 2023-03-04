@@ -183,8 +183,6 @@ class LoRa_socket:
 
     def __encode_data__(self, packet: Packet) -> bytes:
         encoding: bytes = packet.encode()
-        print(f'SEND: Packet num {packet.get_packet_num()} has encoded length: {len(encoding)}')
-        print(f'SEND: Encoded Packet is: {(int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding).hex()}')
         return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
@@ -298,7 +296,6 @@ class LoRa_socket:
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
                 continue
             
-            print(f'HDR Buffer: ${msg_hdr_buffer.hex()}')
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
             freq = msg_hdr_buffer[2]
             
@@ -307,17 +304,15 @@ class LoRa_socket:
             msg_len:int = ba2int(bits)
             
             if msg_len > Packet.MAX_PACKET_SZ:
-                print("Received invalid msg_len, trying again")
+                # Invalid Msg Length. Must have been an error retrieving from the serial port
                 self.clear_ser()
                 continue
             
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
-                print("Unable to receive msg payload")
                 continue
             
-            print(f'Payload Buffer: ${msg_payload_buffer.hex()}')
             pkt_rssi = None
             channel_rssi = None
             
@@ -329,7 +324,6 @@ class LoRa_socket:
 
                 # print the rssi
                 if rssi_payload is not None:
-                    print(f'Payload Buffer: ${rssi_payload.hex()}')
                     pkt_rssi = (256 - rssi_payload[-1:][0])*-1
                     channel_rssi = self.__get_channel_rssi()
                     print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
