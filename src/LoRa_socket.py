@@ -240,7 +240,9 @@ class LoRa_socket:
             
             # Remove all acks from buffer
             while len(unacked_packets) > len(unsent_packets):
+                print("looping")
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
+                print(f'Got response of: {response}')
                 
                 if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.remove(response.packet_num)
