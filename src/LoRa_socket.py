@@ -216,7 +216,7 @@ class LoRa_socket:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
-        batch_sz = 1
+        batch_sz = 2
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
         print(f'Sending {len(packets)} packets')
@@ -237,11 +237,11 @@ class LoRa_socket:
                     sent_packets += 1
                     self.__send_packet(address, packet)
                     unsent_packets.remove(packet.packet_num)
-                    time.sleep(0.5) # TODO: remove
+                    if sent_packets < batch_sz:
+                        time.sleep(1) # TODO: remove
             
             # Remove all acks from buffer
             while len(unacked_packets) > len(unsent_packets):
-                print("looping")
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 print(f'Got response of: {response}')
                 
@@ -249,7 +249,9 @@ class LoRa_socket:
                     unacked_packets.remove(response.packet_num)
                 else:
                     break
-            retries += 1
+                
+            if len(unsent_packets) == 0:
+                retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
             raise Exception("Error: Unable to transmit full payload")
@@ -308,7 +310,6 @@ class LoRa_socket:
             bits:bitarray = bitarray()
             bits.frombytes(msg_hdr_buffer[3:hdr_len])
             msg_len:int = ba2int(bits)
-            print(f'Decoded msg length of {msg_len}')
             
             if msg_len > Packet.MAX_PACKET_SZ:
                 print("Received invalid msg_len, trying again")
