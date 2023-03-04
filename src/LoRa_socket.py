@@ -217,7 +217,7 @@ class LoRa_socket:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
     def send(self, payload: bytes, address: int) -> None:
-        batch_sz = 2
+        batch_sz = 1
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
         
