@@ -57,6 +57,15 @@ class LoRa_socket:
         self.ser.flushInput()
         self.set(freq, addr, power, rssi, air_speed, net_id, buffer_size,
                  crypt, relay, lbt, wor)
+        
+        # Statistics:
+        self.sent_packets = 0
+        self.sent_bytes = 0
+        self.received_packets = 0
+        self.received_bytes = 0
+        self.dropped_packets = 0
+        self.packet_rssis = []
+        self.channel_rssi = None
 
     def set(self,freq,addr,power,rssi,air_speed,\
             net_id=0,buffer_size=constants.BUF_SZ,crypt=0,\
@@ -186,6 +195,8 @@ class LoRa_socket:
         return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
+        self.sent_packets += 1
+        self.sent_bytes += len(data)
         self.ser.write(data)
         
     # the sending message format
@@ -241,6 +252,7 @@ class LoRa_socket:
                 if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.remove(response.packet_num)
                 else:
+                    self.dropped_packets += len(unacked_packets) - len(unsent_packets)
                     break
                 
             if len(unsent_packets) == 0:
@@ -294,6 +306,8 @@ class LoRa_socket:
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
             msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
+                if msg_hdr_buffer is not None:
+                    self.dropped_packets += 1
                 continue
             
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
@@ -306,19 +320,21 @@ class LoRa_socket:
             if msg_len > Packet.MAX_PACKET_SZ:
                 # Invalid Msg Length. Must have been an error retrieving from the serial port
                 self.clear_ser()
+                self.dropped_packets += 1
                 continue
             
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
+                self.dropped_packets += 1
                 continue
             
             pkt_rssi = None
             channel_rssi = None
             
+            rssi_payload = None
             if self.rssi:
                 # Decode RSSI value appended to sent package
-                rssi_payload = None
                 if self.ser.in_waiting >= 1:
                     rssi_payload = self.__read_ser(1, 0.05)
 
@@ -326,10 +342,13 @@ class LoRa_socket:
                 if rssi_payload is not None:
                     pkt_rssi = (256 - rssi_payload[-1:][0])*-1
                     channel_rssi = self.__get_channel_rssi()
+                    self.packet_rssis.append(pkt_rssi)
                     print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
             
             try:
                 packet = Packet.decode(msg_payload_buffer)
+                self.received_packets += 1
+                self.received_bytes += len(msg_hdr_buffer) + len(msg_payload_buffer) + (len(rssi_payload) if rssi_payload is not None else 0)
                 return (packet, address, freq, pkt_rssi, channel_rssi)
             except Exception as e:
                 # Try to decode another packet
@@ -414,6 +433,7 @@ class LoRa_socket:
             print("the current noise rssi value: -{0}dBm".format(256 -
                                                                  re_temp[3]))
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
+            self.channel_rssi = channel_rssi
             return channel_rssi
         else:
             # pass
