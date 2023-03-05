@@ -18,6 +18,7 @@ import sys
 import LoRa_socket
 import time
 import util as u
+import traceback
 
 # Call with test_transmitter {addr} {test_time} (in sec)
 def run_test(arguments):
@@ -45,5 +46,7 @@ def run_test(arguments):
         print(f'Dropped Packets: {node.dropped_packets}, {float(node.dropped_packets)/ float(node.sent_packets + node.received_packets)}%')
     except Exception as e:
         print(f'Exception in transmitter: {str(e)}')
+        print(traceback.format_exc())
+        print(sys.exc_info()[2])
 if __name__ == "__main__":
     run_test(sys.argv)
