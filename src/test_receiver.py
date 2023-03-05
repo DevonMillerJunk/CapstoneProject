@@ -30,6 +30,7 @@ def run_test(arguments):
         if addr is None:
             raise Exception("Unable to establish connection with node")
         print(f'Connected to Node {addr}')
+        real_start_t = time.time()
         while True:
             start_t = time.time()
             recv_bits: int = 0
@@ -42,8 +43,8 @@ def run_test(arguments):
                     print("Did not receive a message")
             end_t = time.time()
             print(f'Effective Received {recv_bits} bits in {end_t - start_t} seconds. {float(recv_bits) / (end_t - start_t)}bps')
-            print(f'True Data Rate: Sent {8 * node.received_bytes} bits in {end_t - start_t} seconds. {float(8 * node.received_bytes) / (end_t - start_t)}bps')
-            print(f'Dropped Packets: {node.dropped_packets}, {float(node.dropped_packets)/ float(node.sent_packets + node.received_packets)}%')
+            print(f'True Data Rate: Sent {8 * node.received_bytes} bits in {end_t - real_start_t} seconds. {float(8 * node.received_bytes) / (end_t - real_start_t)}bps')
+            print(f'Dropped Packets: {node.dropped_packets}, {100 * float(node.dropped_packets)/ float(node.sent_packets + node.received_packets)}%')
     except Exception as e:
         print(f'Exception in receiver: {str(e)}')
         print(traceback.format_exc())

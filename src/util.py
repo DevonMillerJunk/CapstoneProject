@@ -45,7 +45,7 @@ def genLongLoremIpsom() -> str:
         Mauris cursus mattis molestie a iaculis at erat pellentesque adipiscing. Odio morbi quis commodo odio aenean sed adipiscing. Ut sem viverra aliquet eget sit amet. Vel fringilla est ullamcorper eget nulla facilisi. Vitae proin sagittis nisl rhoncus. Iaculis at erat pellentesque adipiscing commodo elit at. Suscipit adipiscing bibendum est ultricies. Elit eget gravida cum sociis natoque penatibus. Quis vel eros donec ac odio. Amet est placerat in egestas erat imperdiet sed. Bibendum neque egestas congue quisque egestas diam in arcu cursus. Tortor id aliquet lectus proin nibh. In fermentum posuere urna nec. Faucibus turpis in eu mi bibendum neque egestas congue quisque. Aliquam etiam erat velit scelerisque in dictum. Facilisis leo vel fringilla est. Purus sit amet luctus venenatis lectus. Dignissim enim sit amet venenatis urna cursus eget nunc. 
         Nascetur ridiculus mus mauris vitae ultricies leo integer malesuada.i9650GgbH7xsjSr3FO1BKZo01YXGwFU8fE62fSc6w9AZMiXJvtBPc3iMr8W3PvFI54aSP4MDNJpBk25EKs5TJJA66sX7pKzZ1Y4XGCiw06HY1YG6v9Gg1Y3yP952hF8HkSRksQTd5j09ml0XX554um7gCUMXSHDv28wkKR7eOTq3N0jAZPI2n330mixIL"""
         
-def gen_packet(length: int = 232) -> str:
+def gen_packet(length: int = 223) -> str:
     base_msg = f'Temp is {get_cpu_temp()} deg C. Long Tail Message: {genLongLoremIpsom()}'
     if len(base_msg) < length:
         base_msg += genLongLoremIpsom()
