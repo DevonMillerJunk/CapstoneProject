@@ -245,14 +245,14 @@ class LoRa_socket:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
                     sent_packets += 1
                     self.__send_packet(address, packet)
-                    unsent_packets.remove(packet.packet_num)
+                    unsent_packets.discard(packet.packet_num)
             
             # Remove all acks from buffer
             print("Waiting for acks")
             while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 if response is not None and response.is_ack == True and addr == address:
-                    unacked_packets.remove(response.packet_num)
+                    unacked_packets.discard(response.packet_num)
                 else:
                     self.dropped_packets += len(unacked_packets) - len(unsent_packets)
                     break
@@ -301,8 +301,9 @@ class LoRa_socket:
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
+        start_t = time.time()
         retry_num = -1
-        while retry_num < 10:
+        while retry_num < 10 and time.time() - start_t < timeout:
             retry_num += 1
             # Decode Header
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
@@ -326,7 +327,7 @@ class LoRa_socket:
                 continue
             
             # Decode Payload
-            msg_payload_buffer = self.__read_ser(msg_len, timeout)
+            msg_payload_buffer = self.__read_ser(msg_len, 0.15)
             if msg_payload_buffer is None:
                 self.dropped_packets += 1
                 continue
