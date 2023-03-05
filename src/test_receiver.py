@@ -34,7 +34,7 @@ def run_test(arguments):
             start_t = time.time()
             recv_bits: int = 0
             while time.time() - start_t < 15.0:
-                received_message = node.recv(2)
+                received_message = node.recv(5)
                 if received_message is not None:
                     (payload, addr) = received_message
                     recv_bits += 8 * len(payload.decode())
