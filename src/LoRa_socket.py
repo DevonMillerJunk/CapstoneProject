@@ -327,7 +327,7 @@ class LoRa_socket:
                 continue
             
             # Decode Payload
-            msg_payload_buffer = self.__read_ser(msg_len, 0.15)
+            msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
                 self.dropped_packets += 1
                 continue
@@ -339,7 +339,7 @@ class LoRa_socket:
             if self.rssi:
                 # Decode RSSI value appended to sent package
                 if self.ser.in_waiting >= 1:
-                    rssi_payload = self.__read_ser(1, 0.05)
+                    rssi_payload = self.__read_ser(1, 0.1)
 
                 # print the rssi
                 if rssi_payload is not None:
