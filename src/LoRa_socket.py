@@ -241,7 +241,8 @@ class LoRa_socket:
         while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send up to batch_sz un_acked packets
             sent_packets = 0
-            print("Sending packets")
+            received_an_ack = False
+            print(f'Sending packets. Unsent packets:{unsent_packets} Unacked packets: {unacked_packets}')
             for packet in packets:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
                     sent_packets += 1
@@ -254,11 +255,12 @@ class LoRa_socket:
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 if response is not None and response.is_ack == True and addr == address:
                     unacked_packets.discard(response.packet_num)
+                    received_an_ack = True
                 else:
                     self.dropped_packets += len(unacked_packets) - len(unsent_packets)
                     break
                 
-            if len(unsent_packets) == 0:
+            if received_an_ack == False:
                 retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
