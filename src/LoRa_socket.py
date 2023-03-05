@@ -224,7 +224,8 @@ class LoRa_socket:
     def __send_ack(self, packet_num: int, address: int) -> None:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
-    def send(self, payload: bytes, address: int) -> None:
+    # Return true/false for successful send or not    
+    def send(self, payload: bytes, address: int) -> bool:
         batch_sz = 1
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
@@ -261,7 +262,9 @@ class LoRa_socket:
                 retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
-            raise Exception("Error: Unable to transmit full payload")
+            #raise Exception("Error: Unable to transmit full payload")
+            return False
+        return True
      
     # Clears the serial buffer incase of packets in progress
     def clear_ser(self) -> None:
