@@ -44,6 +44,6 @@ def run_test(arguments):
         print(f'True Data Rate: Sent {8 * node.sent_bytes} bits in {end_t - start_t} seconds. {float(8 * node.sent_bytes) / (end_t - start_t)}bps')
         print(f'Dropped Packets: {node.dropped_packets}, {float(node.dropped_packets)/ float(node.sent_packets + node.received_packets)}%')
     except Exception as e:
-        print(e)
+        print(f'Exception in transmitter: {str(e)}')
 if __name__ == "__main__":
     run_test(sys.argv)

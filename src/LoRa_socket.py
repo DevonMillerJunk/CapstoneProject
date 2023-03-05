@@ -240,6 +240,7 @@ class LoRa_socket:
         while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send up to batch_sz un_acked packets
             sent_packets = 0
+            print("Sending packets")
             for packet in packets:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
                     sent_packets += 1
@@ -247,6 +248,7 @@ class LoRa_socket:
                     unsent_packets.remove(packet.packet_num)
             
             # Remove all acks from buffer
+            print("Waiting for acks")
             while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 if response is not None and response.is_ack == True and addr == address:
