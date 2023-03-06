@@ -312,8 +312,6 @@ class LoRa_socket:
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
             msg_hdr_buffer = self.__read_ser(hdr_len, timeout)
             if msg_hdr_buffer is None or len(msg_hdr_buffer) != hdr_len:
-                if msg_hdr_buffer is not None:
-                    self.dropped_packets += 1
                 continue
             
             address = int.from_bytes(msg_hdr_buffer[0:2], "big")
@@ -326,13 +324,11 @@ class LoRa_socket:
             if msg_len > Packet.MAX_PACKET_SZ:
                 # Invalid Msg Length. Must have been an error retrieving from the serial port
                 self.clear_ser()
-                self.dropped_packets += 1
                 continue
             
             # Decode Payload
             msg_payload_buffer = self.__read_ser(msg_len, timeout)
             if msg_payload_buffer is None:
-                self.dropped_packets += 1
                 continue
             
             pkt_rssi = None
@@ -375,11 +371,13 @@ class LoRa_socket:
                 while frame.all_packets_recv() == False:
                     (res, addr, _, _, _) = self.__receive(timeout)
                     if res != None and addr == self.connected_address and res.is_ack == False:
-                        frame.append(res)
+                        if frame.append(res) == False:
+                            self.dropped_packets += 1
                         self.__send_ack(res.packet_num, addr)
                     else:
                         # Couldn't retrieve package in timeout, exiting
                         print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
+                        self.dropped_packets += len(frame.missing_packets())
                         break
                 if frame.all_packets_recv():
                     return (frame.get_payload(), self.connected_address)

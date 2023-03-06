@@ -43,8 +43,8 @@ def run_test(arguments):
         end_t = time.time()
             
         print(f'Effective Data Rate: Sent {bits_sent} bits in {end_t - start_t} seconds. {float(bits_sent) / (end_t - start_t)}bps')
-        print(f'True Data Rate: Sent {8 * node.sent_bytes} bits in {end_t - start_t} seconds. {float(8 * node.sent_bytes) / (end_t - start_t)}bps')
-        print(f'Dropped Packets: {node.dropped_packets}, {100 * float(node.dropped_packets)/ float(node.sent_packets + node.received_packets)}%')
+        print(f'True (Includes Header Data) Data Rate: Sent {8 * node.sent_bytes} bits in {end_t - start_t} seconds. {float(8 * node.sent_bytes) / (end_t - start_t)}bps')
+        print(f'(Lower Bound) Dropped Packets: {node.dropped_packets}, {100 * float(node.dropped_packets) / float(node.dropped_packets + node.sent_packets + node.received_packets)}%')
     except Exception as e:
         print(f'Exception in transmitter: {str(e)}')
         print(traceback.format_exc())
