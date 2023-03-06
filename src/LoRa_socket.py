@@ -57,6 +57,15 @@ class LoRa_socket:
         self.ser.flushInput()
         self.set(freq, addr, power, rssi, air_speed, net_id, buffer_size,
                  crypt, relay, lbt, wor)
+        
+        # Statistics:
+        self.sent_packets = 0
+        self.sent_bytes = 0
+        self.received_packets = 0
+        self.received_bytes = 0
+        self.dropped_packets = 0
+        self.packet_rssis = []
+        self.channel_rssi = None
 
     def set(self,freq,addr,power,rssi,air_speed,\
             net_id=0,buffer_size=constants.BUF_SZ,crypt=0,\
@@ -186,6 +195,8 @@ class LoRa_socket:
         return int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
     
     def __raw_send(self, data: bytes):
+        self.sent_packets += 1
+        self.sent_bytes += len(data)
         self.ser.write(data)
         
     # the sending message format
@@ -213,7 +224,8 @@ class LoRa_socket:
     def __send_ack(self, packet_num: int, address: int) -> None:
         self.__send_packet(address, Packet(True, packet_num, None, None))
         
-    def send(self, payload: bytes, address: int) -> None:
+    # Return true/false for successful send or not    
+    def send(self, payload: bytes, address: int) -> bool:
         batch_sz = 1
         # Packetize input
         packets: list[Packet] = Frame.packetize(payload)
@@ -229,25 +241,30 @@ class LoRa_socket:
         while len(unacked_packets) > 0 and retries < self.max_retries:
             # Send up to batch_sz un_acked packets
             sent_packets = 0
+            received_an_ack = False
             for packet in packets:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
                     sent_packets += 1
                     self.__send_packet(address, packet)
-                    unsent_packets.remove(packet.packet_num)
+                    unsent_packets.discard(packet.packet_num)
             
             # Remove all acks from buffer
             while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 if response is not None and response.is_ack == True and addr == address:
-                    unacked_packets.remove(response.packet_num)
+                    unacked_packets.discard(response.packet_num)
+                    received_an_ack = True
                 else:
+                    self.dropped_packets += len(unacked_packets) - len(unsent_packets)
                     break
                 
-            if len(unsent_packets) == 0:
+            if received_an_ack == False:
                 retries += 1
         if len(unacked_packets) > 0:
             print("packet delivery failed for " + str(unacked_packets))
-            raise Exception("Error: Unable to transmit full payload")
+            #raise Exception("Error: Unable to transmit full payload")
+            return False
+        return True
      
     # Clears the serial buffer incase of packets in progress
     def clear_ser(self) -> None:
@@ -287,8 +304,9 @@ class LoRa_socket:
         
     # Returns packet, address, freq, pkt_rssi, channel_rssi (rssi are None if self.rssi == False)
     def __receive(self, timeout: float = 1) -> Tuple['Packet | None', 'int | None', 'int | None', 'int | None', 'int | None']:
+        start_t = time.time()
         retry_num = -1
-        while retry_num < 10:
+        while retry_num < 10 and time.time() - start_t < timeout:
             retry_num += 1
             # Decode Header
             hdr_len = 3 + math.ceil(Packet.INT_LEN / 8)
@@ -316,20 +334,23 @@ class LoRa_socket:
             pkt_rssi = None
             channel_rssi = None
             
+            rssi_payload = None
             if self.rssi:
                 # Decode RSSI value appended to sent package
-                rssi_payload = None
                 if self.ser.in_waiting >= 1:
-                    rssi_payload = self.__read_ser(1, 0.05)
+                    rssi_payload = self.__read_ser(1, 0.1)
 
                 # print the rssi
                 if rssi_payload is not None:
                     pkt_rssi = (256 - rssi_payload[-1:][0])*-1
                     channel_rssi = self.__get_channel_rssi()
+                    self.packet_rssis.append(pkt_rssi)
                     print(f'the packet rssi value: -{pkt_rssi}dBm, channel rssi value: -{channel_rssi}dBm')
             
             try:
                 packet = Packet.decode(msg_payload_buffer)
+                self.received_packets += 1
+                self.received_bytes += len(msg_hdr_buffer) + len(msg_payload_buffer) + (len(rssi_payload) if rssi_payload is not None else 0)
                 return (packet, address, freq, pkt_rssi, channel_rssi)
             except Exception as e:
                 # Try to decode another packet
@@ -350,11 +371,13 @@ class LoRa_socket:
                 while frame.all_packets_recv() == False:
                     (res, addr, _, _, _) = self.__receive(timeout)
                     if res != None and addr == self.connected_address and res.is_ack == False:
-                        frame.append(res)
+                        if frame.append(res) == False:
+                            self.dropped_packets += 1
                         self.__send_ack(res.packet_num, addr)
                     else:
                         # Couldn't retrieve package in timeout, exiting
                         print(f'Unable to receive full package in timeout. {frame.missing_packets()} not received')
+                        self.dropped_packets += len(frame.missing_packets())
                         break
                 if frame.all_packets_recv():
                     return (frame.get_payload(), self.connected_address)
@@ -414,6 +437,7 @@ class LoRa_socket:
             print("the current noise rssi value: -{0}dBm".format(256 -
                                                                  re_temp[3]))
             # print("the last receive packet rssi value: -{0}dBm".format(256-re_temp[4]))
+            self.channel_rssi = channel_rssi
             return channel_rssi
         else:
             # pass

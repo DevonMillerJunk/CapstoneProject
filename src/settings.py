@@ -2,4 +2,4 @@
 AIR_SPEED = 9600
 POWER = 22
 BUF_SZ = 240
-RSSI = False  # receive signal strength indicator
+RSSI = True  # receive signal strength indicator

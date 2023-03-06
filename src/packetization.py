@@ -111,7 +111,8 @@ class Frame:
                 self.packets.append(None)
     
     # append the received packet to the frame
-    def append(self, packet: Packet):
+    # return true if the packet hasn't been received yet
+    def append(self, packet: Packet) -> bool:
         ## TODO: keep these for testing, consider commenting out once code properly tested
         if packet.is_ack == True:
             raise Exception("Error: cannot decode frame with ACK packet")
@@ -119,7 +120,9 @@ class Frame:
             raise Exception("Warning: Overwritting received packet")
         if self.total_packets != packet.get_total_packets():
             raise Exception("Warning: Mismatched frame total_packets amount")
+        result = True if self.packets[packet.get_packet_num()] == None else False
         self.packets[packet.get_packet_num()] = packet
+        return result
       
     # determine which packets are missing  
     def missing_packets(self) -> List[int]:
