@@ -4,6 +4,7 @@ from bitarray import bitarray
 from bitarray.util import ba2int, int2ba
 from settings import BUF_SZ
 import error_encoding.crc as crc
+import error_encoding.rsc as rsc
 import math
 import util as u
 
@@ -14,12 +15,14 @@ import util as u
 class Packet:
     # Class variables
     CRC = crc.CRC()
-    USE_CRC:bool = True # Temporary while we test with/without crc
+    RSC = rsc.ReedSoloman()
+    USE_ERR_ENC:bool = True # Temporary while we test with/without error encoding
+    CRC_METHOD:bool = False # if true use CRC else use RSC
     INT_LEN:int = 16 # used for decoding, in bits
     # MAX_PACKET_SZ (bytes) should be <= BUF_SZ - 5 (header length)
     MAX_PACKET_SZ: int = BUF_SZ - 8 # Require 8 bytes for the LoRa header
     # Total Packet size (MAX_PACKET_SZ) = payload + packet_num + total_packets + crc + is_ack (in bytes)
-    PACKET_DATA_SZ:int = (MAX_PACKET_SZ) - 1 - (2 * math.ceil(INT_LEN / 8)) - (CRC.CRC_SZ if USE_CRC else 0)
+    PACKET_DATA_SZ:int = (MAX_PACKET_SZ) - 1 - (2 * math.ceil(INT_LEN / 8)) - (0 if not USE_ERR_ENC else (CRC.CRC_SZ if CRC_METHOD else RSC.rsc_len(MAX_PACKET_SZ)))
     
     # Constructor
     # If is_ack is true, total_packets and payload are not used
@@ -66,8 +69,11 @@ class Packet:
     # Return the packet encoded as bytes
     def encode(self) -> bytes:
         combined_packet:bytes = self.__combined_packet()
-        if self.USE_CRC:
-            return self.CRC.encode(combined_packet)
+        if self.USE_ERR_ENC:
+            if self.CRC_METHOD:
+                return self.CRC.encode(combined_packet)
+            else:
+                return self.RSC.encode(combined_packet)
         return combined_packet
         
     # Decode a given byte array into a packet
@@ -75,8 +81,11 @@ class Packet:
     @staticmethod
     def decode(data: bytes) -> 'Packet': # note 'Packet' is due to a weird python restriction
         result_bytes = data
-        if Packet.USE_CRC:
-            result_bytes = Packet.CRC.decode(data)
+        if Packet.USE_ERR_ENC:
+            if Packet.CRC_METHOD:
+                result_bytes = Packet.CRC.decode(data)
+            else:
+                result_bytes = Packet.RSC.decode(data)
         bits:bitarray = bitarray()
         bits.frombytes(result_bytes)
         is_ack: bool = False if ba2int(bits[0:8]) == 0 else True
