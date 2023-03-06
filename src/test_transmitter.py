@@ -24,7 +24,8 @@ import traceback
 def run_test(arguments):
     arg_addr = int(arguments[1])
     test_duration = float(arguments[2])
-    node = LoRa_socket.LoRa_socket(addr=arg_addr)
+    get_rssi = arguments[3].lower().capitalize() == "True"
+    node = LoRa_socket.LoRa_socket(addr=arg_addr, rssi=get_rssi)
     try:
         print("attempting to establish connection, broadcasting to nearby nodes")
         conn_addr = node.connect()

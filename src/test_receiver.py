@@ -23,7 +23,8 @@ import traceback
 # Call with test_receiver {addr}
 def run_test(arguments):
     arg_addr = int(arguments[1])
-    node = LoRa_socket.LoRa_socket(addr=arg_addr)
+    get_rssi = arguments[2].lower().capitalize() == "True"
+    node = LoRa_socket.LoRa_socket(addr=arg_addr, rssi=get_rssi)
     try:
         print("attempting to establish connection, listening for nearby nodes")
         addr = node.accept()
