@@ -462,6 +462,8 @@ class LoRa_socket:
             
         encoding = bits.tobytes()
         
+        print(f'Sending packet to {address} with {num_errors}')
+        
         data: bytes = self.__format_addr__(address) +\
             bytes([self.offset_freq]) +\
             self.__format_addr__(self.addr) +\
