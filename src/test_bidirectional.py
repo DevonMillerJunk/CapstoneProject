@@ -42,8 +42,8 @@ def run_test(arguments):
                     if received_message is not None:
                         (recv_payload, _) = received_message
                         print(f'Received Message: {recv_payload.decode()}')
-                    else:
-                        print("Did not receive a response")
+                    # else:
+                    #     print("Did not receive a response")
             else:
                 print("Unable to establish connection. Closing program")
         else:
