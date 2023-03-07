@@ -490,7 +490,7 @@ class LoRa_socket:
             for packet in packets:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
                     sent_packets += 1
-                    self.test_send_packet_with_errors(packet, packet, num_errors)
+                    self.test_send_packet_with_errors(packet, address, num_errors)
                     unsent_packets.discard(packet.packet_num)
             
             # Remove all acks from buffer
