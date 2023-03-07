@@ -18,11 +18,14 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
+  <a href="https://uwaterloo.viewer.foleon.com/2023-capstone/electrical-computer/participants-2">
+    <img src="images/frequensea.png" alt="Logo" width="312" height="103">
+  </a>
   <a href="https://github.com/DevonMillerJunk/CapstoneProject">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">HydroBits</h3>
+  <h3 align="center">FrequenSea</h3>
 
   <p align="center">
     An adaptable underwater wireless communication platform
@@ -79,7 +82,6 @@ Some core concepts associated with our project.
 * [Radio Transmission](https://www.sciencedirect.com/topics/computer-science/radio-transmission#:~:text=In%20radio%20transmission%2C%20electromagnetic%20power,into%20a%20receiver%20for%20detection.)
 * [Underwater Communication](https://www.hindawi.com/journals/wcmc/2019/6470359/)
 * [LoRa](https://www.semtech.com/lora/what-is-lora)
-* [GRAND](https://www.granddecoder.mit.edu/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -124,19 +126,19 @@ With a pair of Raspberry Pi and SX1262 LoRa Hats, one is able to set up a transm
 ## Roadmap
 
 - [x] Design of Standard
-- [ ] Basic Test Bench for Antenna Assessment
-- [ ] Error Encoding and Decoding
-    - [ ] Implementation of CRC code generation
-    - [ ] Error Correction through GRAND decoding
-    - [ ] Optimization of parameters
+- [x] Basic Test Bench for Antenna Assessment
+- [x] Error Encoding and Decoding
+    - [x] Implementation of CRC code generation
+    - [x] Error Correction through RS decoding
+    - [x] Optimization of parameters
 - [ ] Network Implementation
-    - [ ] Packetization of the data
-    - [ ] Timing and ackknowledgements
-    - [ ] Integration of Error Encoding and Decoding
-    - [ ] Retransmission of failed packets
-- [ ] Advanced Test Bench
-    - [ ] Basic Test Bench built on top of Network Implementation
-    - [ ] Metrics Collection and Assessment
+    - [x] Packetization of the data
+    - [x] Timing and ackknowledgements
+    - [x] Integration of Error Encoding and Decoding
+    - [x] Retransmission of failed packets
+- [x] Advanced Test Bench
+    - [x] Basic Test Bench built on top of Network Implementation
+    - [x] Metrics Collection and Assessment
 
 See the [open issues](https://github.com/DevonMillerJunk/CapstoneProject/issues) for a full list of proposed features (and known issues).
 
