@@ -38,6 +38,7 @@ def run_test(arguments):
         bits_sent: int = 0 
         start_t = time.time()
         while time.time() - start_t < test_duration:
+            print("calling test_send_with_errors")
             node.test_send_with_errors(message, conn_addr, num_errors)
             bits_sent += message_len_bits
         end_t = time.time()

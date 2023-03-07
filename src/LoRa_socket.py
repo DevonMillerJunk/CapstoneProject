@@ -459,6 +459,7 @@ class LoRa_socket:
         while num_errors_added < num_errors:
             idx = (start_idx + 9 * num_errors_added) % len(bits)
             bits[idx] = 1 if bits[idx] == 0 else 0
+            num_errors_added += 1
             
         encoding = bits.tobytes()
         
@@ -489,13 +490,16 @@ class LoRa_socket:
             # Send up to batch_sz un_acked packets
             sent_packets = 0
             received_an_ack = False
+            print("Sending packets:")
             for packet in packets:
                 if packet.packet_num in unacked_packets and sent_packets < batch_sz:
+                    print("Calling send function")
                     sent_packets += 1
                     self.test_send_packet_with_errors(packet, address, num_errors)
                     unsent_packets.discard(packet.packet_num)
             
             # Remove all acks from buffer
+            print("Receiving packets:")
             while len(unacked_packets) > len(unsent_packets):
                 (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
                 if response is not None and response.is_ack == True and addr == address:
