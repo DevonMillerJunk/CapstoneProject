@@ -10,6 +10,7 @@ import math
 from packetization import Packet, Frame
 from bitarray import bitarray
 from bitarray.util import ba2int, int2ba
+import random
 
 
 class LoRa_socket:
@@ -444,3 +445,68 @@ class LoRa_socket:
             print("receive rssi value fail")
             # print("receive rssi value fail: ",re_temp)
             return None
+
+
+    def test_send_packet_with_errors(self, packet: Packet, address: int, num_errors: int) -> bool:
+        packet_encoded = packet.encode()
+        bits = bitarray()
+        bits.frombytes(packet_encoded)
+        
+        # Flips num_errors bits, but try to ensure they are spaced out by at least 8 bits 
+        # since up to 8 errors in a given byte can be caught and fixed
+        num_errors_added = 0
+        start_idx = random.randint(0, len(bits))
+        while num_errors_added < num_errors:
+            idx = (start_idx + 9 * num_errors_added) % len(bits)
+            bits[idx] = 1 if bits[idx] == 0 else 0
+            
+        encoding = bits.tobytes()
+        
+        data: bytes = self.__format_addr__(address) +\
+            bytes([self.offset_freq]) +\
+            self.__format_addr__(self.addr) +\
+            bytes([self.offset_freq]) +\
+            int2ba(len(encoding), Packet.INT_LEN).tobytes() + encoding
+        self.__raw_send(data)
+
+    # Return true/false for successful send or not    
+    def test_send_with_errors(self, payload: bytes, address: int, num_errors: int) -> bool:
+        batch_sz = 1
+        # Packetize input
+        packets: list[Packet] = Frame.packetize(payload)
+        
+        # Send Packets
+        unacked_packets = set()
+        unsent_packets = set()
+        for packet in packets:
+            unacked_packets.add(packet.packet_num)
+            unsent_packets.add(packet.packet_num)
+        retries = -1
+        self.clear_ser()
+        while len(unacked_packets) > 0 and retries < self.max_retries:
+            # Send up to batch_sz un_acked packets
+            sent_packets = 0
+            received_an_ack = False
+            for packet in packets:
+                if packet.packet_num in unacked_packets and sent_packets < batch_sz:
+                    sent_packets += 1
+                    self.test_send_packet_with_errors(packet, packet, num_errors)
+                    unsent_packets.discard(packet.packet_num)
+            
+            # Remove all acks from buffer
+            while len(unacked_packets) > len(unsent_packets):
+                (response, addr, _, _, _) = self.__receive(4 if self.rssi else 1)
+                if response is not None and response.is_ack == True and addr == address:
+                    unacked_packets.discard(response.packet_num)
+                    received_an_ack = True
+                else:
+                    self.dropped_packets += len(unacked_packets) - len(unsent_packets)
+                    break
+                
+            if received_an_ack == False:
+                retries += 1
+        if len(unacked_packets) > 0:
+            print("packet delivery failed for " + str(unacked_packets))
+            #raise Exception("Error: Unable to transmit full payload")
+            return False
+        return True
