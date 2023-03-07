@@ -48,7 +48,7 @@ class ReedSoloman:
             raise Exception("Invalid message received")
         
         if fixed_errors > 0:
-            print(f'Fixed {fixed_errors} during the decoding')
+            print(f'Fixed {fixed_errors} errors during the decoding')
         return result
     
     
