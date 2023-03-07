@@ -19,8 +19,9 @@
 <br />
 <div align="center">
   <a href="https://uwaterloo.viewer.foleon.com/2023-capstone/electrical-computer/participants-2">
-    <img src="images/frequensea.png" alt="Logo" width="312" height="103">
+    <img src="images/frequensea.png" alt="Logo" width="941" height="309">
   </a>
+  
   <a href="https://github.com/DevonMillerJunk/CapstoneProject">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
