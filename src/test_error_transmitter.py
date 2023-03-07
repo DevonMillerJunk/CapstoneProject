@@ -33,7 +33,7 @@ def run_test(arguments):
             raise Exception("Unable to establish connection. Closing program")
             
         print(f'Connection established to node {conn_addr}')
-        message = u.gen_packet().encode()
+        message = u.gen_packet(110).encode()
         message_len_bits = len(message) * 8
         bits_sent: int = 0 
         start_t = time.time()
