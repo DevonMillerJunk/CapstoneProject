@@ -4,6 +4,7 @@ import sys
 import LoRa_socket
 import time
 import util as u
+import constants as c
 import traceback
 from packetization import Packet
 
@@ -18,13 +19,9 @@ def run_test(arguments):
             raise Exception("Unable to establish connection. Closing program")
             
         print(f'Connection established to node {conn_addr}')
-        message = u.gen_packet().encode()
-        message_len_bits = len(message) * 8
-        bits_sent: int = 0 
-        start_t = time.time()
         while True:
             input1 = input()
-            len_suffix = 0 if (input1 % Packet.PACKET_DATA_SZ == 0) else (Packet.PACKET_DATA_SZ - (input1 % Packet.PACKET_DATA_SZ == 0))
+            len_suffix = 0 if (input1 % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (input1 % c.PACKET_DATA_SZ == 0))
             total_msg = (input1 + (' ' * len_suffix)).encode()
             total_bits = 8 * len(total_msg)
             start_t = time.time()
