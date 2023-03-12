@@ -24,6 +24,7 @@ def run_test(arguments):
             combined_input = f'MSG:{input1}'
             len_suffix = 0 if (len(combined_input) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(combined_input) % c.PACKET_DATA_SZ == 0))
             total_msg = (combined_input + (' ' * len_suffix)).encode()
+            print(f'Len of total message is: {len(total_msg)}')
             total_bits = 8 * len(total_msg)
             start_t = time.time()
             node.send(total_msg, conn_addr)
