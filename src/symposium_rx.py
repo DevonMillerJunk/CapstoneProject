@@ -26,7 +26,7 @@ def run_test(arguments):
                 if received_message is not None:
                     (payload, addr) = received_message
                     recv_bits += 8 * len(payload.decode())
-                    print(f'MSG:{payload}')
+                    print(f'MSG:{payload.decode().strip()}')
                 # else:
                 #     print("Did not receive a message")
             end_t = time.time()
