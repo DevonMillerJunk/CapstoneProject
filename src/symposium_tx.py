@@ -19,8 +19,8 @@ def run_test(arguments):
             
         print(f'Connection established to node {conn_addr}')
         while True:
-            input1 = input()
-            len_suffix = 0 if (input1 % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (input1 % c.PACKET_DATA_SZ == 0))
+            input1 = input("INP: Please input the message you would like to send")
+            len_suffix = 0 if (len(input1) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(input1) % c.PACKET_DATA_SZ == 0))
             total_msg = (input1 + (' ' * len_suffix)).encode()
             total_bits = 8 * len(total_msg)
             start_t = time.time()
