@@ -20,7 +20,8 @@ def run_test(arguments):
         print(f'Connection established to node {conn_addr}')
         while True:
             # Send a message received from the laptop
-            input1 = input("INP: Please input the message you would like to send:")
+            print("INP: Please input the message you would like to send:")
+            input1 = input()
             combined_input = f'MSG:{input1}'
             len_suffix = 0 if (len(combined_input) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(combined_input) % c.PACKET_DATA_SZ))
             total_msg = (combined_input + (' ' * len_suffix)).encode()
