@@ -6,7 +6,6 @@ import time
 import util as u
 import constants as c
 import traceback
-from packetization import Packet
 
 # Call with test_transmitter {addr}
 def run_test(arguments):

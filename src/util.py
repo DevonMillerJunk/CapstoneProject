@@ -1,7 +1,6 @@
 from bitarray import bitarray
 import binascii
 import csv
-from packetization import Packet
 import constants as c
 
 
