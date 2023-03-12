@@ -1,116 +1,79 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import random
-import time
 import plotly.graph_objects as go
+import util as u
+import time
+from queue import Queue
+from ssh_connection import RpiA
 
-LOGO_PATH = "../images/frequensea.png"
-
-# Generate random data for testing dashboard
-def generate_random_data(msg):
-    bit_rate = random.randint(500, 1000)
-    drop = random.randint(0,10)
-    return bit_rate, drop
-
-# Generate plots side by side using columns
-def generate_side_by_side_plots(bit_rates, dropped_pkts):
-    x_data = np.arange(len(bit_rates))
-
-    # plot 1
-    br_fig = go.Figure([go.Scatter(x=x_data, y=bit_rates, line=dict(color="#FF9933"))])
-    generate_plot_layout(br_fig, "Bit Rate of Transmission", "Bit Rate (bps)")  
-    col1.plotly_chart(br_fig, use_container_width=True, theme=None)
+def init_state():
+    # Define session state keys to store required information
+    if "msg_queue" not in st.session_state:
+        # Producer queue of messages to send
+        st.session_state['msg_queue'] = Queue()
+    if "data_queue" not in st.session_state:
+        # Consumer queue of data to receive
+        st.session_state['data_queue'] = Queue()
+    if "bit_rate_data" not in st.session_state:
+        # Array of bit rate data
+        st.session_state['bit_rate_data'] = []
+    if "pkt_drop_data" not in st.session_state:
+        # Array of packet drop rate data
+        st.session_state['pkt_drop_data'] = []
+        
+def send_message(msg: str):
+    try:
+        st.session_state['msg_queue'].put_nowait(msg)
+    except Exception as e:
+        print(f'Error sending a message: {e}')
+    
+def recv_messages():
+    try:
+        while not st.session_state['data_queue'].empty():
+            (bit_rate, pkt_drop_rate) = st.session_state['data_queue'].get_nowait()
+            st.session_state['bit_rate_data'].append(bit_rate)
+            st.session_state['pkt_drop_data'].append(pkt_drop_rate)
+    except Exception as e:
+        print(f'Error reading from queue: {e}')
+        
+def init_layout():
+    # Title
+    st.header('Transmitter - Communication Metrics')
+    
+    # Sidebar
+    st.sidebar.image(u.LOGO_PATH, width=300)
+    st.sidebar.title('FYDP Demo - Try it Out!')
+    send_str = None
+    with st.sidebar:
+        send_str = st.text_input("Send a Message", value="", key='tx_str')
+        st.write(f"Debugging - Input string - {send_str}")
+    if send_str:
+        send_message(send_str)
+        
+    # Graphs
+    x_data = np.arange(len(st.session_state['bit_rate_data']))
+    bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'], x_data, "Bit Rate", "Time", "#FF9933")
+    st.plotly_chart(bit_rate_graph, use_container_width=True, theme=None)
+    pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'], x_data, "Dropped Packets", "Time", "#23A5A5")
+    st.plotly_chart(pkt_drop_graph, use_container_width=True, theme=None)
+        
     
 
-    # plot 2
-    drop_pkt_fig = go.Figure([go.Scatter(x=x_data, y=dropped_pkts, line=dict(color="#23A5A5"))])
-    generate_plot_layout(drop_pkt_fig, "Dropped Packets", "% Dropped Packets")  
-    col2.plotly_chart(drop_pkt_fig, use_container_width=True, theme=None)
-
-# Generate plots one on top of the other
-def generate_stacked_plots(bit_rates, dropped_pkts):
-    x_data = np.arange(len(bit_rates))
-
-    # plot 1
-    br_fig = go.Figure([go.Scatter(x=x_data, y=bit_rates, line=dict(color="#FF9933"))])
-    generate_plot_layout(br_fig, "Bit Rate of Transmission", "Bit Rate (bps)")  
-    st.plotly_chart(br_fig, use_container_width=True, theme=None)
-
-    # plot 2
-    drop_pkt_fig = go.Figure([go.Scatter(x=x_data, y=dropped_pkts, line=dict(color="#23A5A5"))])
-    generate_plot_layout(drop_pkt_fig, "Dropped Packets during Transmission", "% Dropped Packets")  
-    st.plotly_chart(drop_pkt_fig, use_container_width=True, theme=None)
-
-# Define Layout Components of Graph Figure 
-def generate_plot_layout(fig: go.Figure, title: str, yaxis_title: str):
-    fig.update_layout(
-        title=title,
-        title_font =dict(size=24),
-        title_y = 0.94,
-        xaxis_title="Sample Number",
-        yaxis_title=yaxis_title,
-        font = dict(
-            size=16,
-        ),
-        margin=dict(l=60, r=20, t=50, b=80)
-    )
-    return fig
-
-# Get data and store in session state
-def get_data_session_state():
-
-    # Get current state and user input
-    tx_str = st.session_state['tx_str']
-    session_state_data = st.session_state['msg_data']
-    print(f"Sending Message {tx_str}")
-
-    # Display loading spinner
-    with st.spinner(text="Sending ... "):
-        # Need to send data using Raspberry Pi Here
-        # Generating Random Data for now
-        cur_br, cur_err = generate_random_data(tx_str)
-        session_state_data[tx_str] = [cur_br, cur_err]
-        # I added a sleep to try to mimic potential slowness of ssh connection, probably not needed
-        time.sleep(1)
-    
-    print("Create Graph")
-    # Format bit rate and dropped_pkts into two lists for graphing
-    bit_rates, dropped_pkts = map(list, zip(*session_state_data.values()))
-
-    # Use Plotly to graph
-    # generate_side_by_side_plots(bit_rates, dropped_pkts)
-    generate_stacked_plots(bit_rates, dropped_pkts)
-    print("Done")
-
+# Message: queue of messages to send
+# Data: queue of data from the pi
+@st.cache_resource
+def init_ssh_connection(_messages: Queue, _data: Queue)-> RpiA:
+    r_pi = RpiA(_messages, _data)
+    r_pi.exec()
+    return r_pi
 
 
 # Define session state keys to store required information
-# 'msg_data' is a dictionary with key = user input, values = list(bit rate, dropped pkt %)
-# 'tx_str' is a string recording the user input into the text input field
-if "msg_data" not in st.session_state:
-    st.session_state['msg_data'] = {}
-if "tx_str" not in st.session_state:
-    st.session_state['tx_str'] = ""
+init_state()
+r_pi: RpiA = init_ssh_connection(st.session_state['msg_queue'], st.session_state['data_queue'])
+recv_messages()
+init_layout()
 
-# Define Streamlit elements
-st.header('Transmitter - Communication Metrics')
-st.sidebar.image(LOGO_PATH, width=300)
-st.sidebar.title('FYDP Demo - Try it Out!')
 
-# Used for Side By Side Plots - Not currently used
-col1, col2 = st.columns(2)
-
-# Define sidebar to have user input part
-with st.sidebar:
-    send_str = st.text_input("Send a Message", value="", key='tx_str')
-    st.write(f"Debugging - Input string - {send_str}")
-
-# If message entered then send data and generate graph
-if send_str:
-    get_data_session_state()
-
-# No message - prompt user to send message
-else: 
-    st.write(f"Send a Message to see Results")
 
