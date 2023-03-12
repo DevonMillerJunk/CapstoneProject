@@ -19,14 +19,19 @@ def run_test(arguments):
             
         print(f'Connection established to node {conn_addr}')
         while True:
-            input1 = input("INP: Please input the message you would like to send")
-            len_suffix = 0 if (len(input1) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(input1) % c.PACKET_DATA_SZ == 0))
-            total_msg = (input1 + (' ' * len_suffix)).encode()
+            # Send a message received from the laptop
+            input1 = input("INP: Please input the message you would like to send:")
+            combined_input = f'MSG:{input1}'
+            len_suffix = 0 if (len(combined_input) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(combined_input) % c.PACKET_DATA_SZ == 0))
+            total_msg = (combined_input + (' ' * len_suffix)).encode()
             total_bits = 8 * len(total_msg)
             start_t = time.time()
             node.send(total_msg, conn_addr)
             end_t = time.time()
-            print(f'DAT:{float(total_bits) / (end_t - start_t)},{float(8 * node.sent_bytes) / (end_t - start_t)},{100 * float(node.dropped_packets) / float(node.dropped_packets + node.sent_packets + node.received_packets)}')
+            
+            # Send the data for that message
+            data_msg = f'DAT:{float(total_bits) / (end_t - start_t)},{100 * float(node.dropped_packets) / float(node.dropped_packets + node.sent_packets + node.received_packets)}'
+            node.send(data_msg, conn_addr)
     except Exception as e:
         print(f'Exception in transmitter: {str(e)}')
         print(traceback.format_exc())
