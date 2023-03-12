@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import util as u
 from queue import Queue
 from ssh_connection import RpiB
+from streamlit_autorefresh import st_autorefresh
 
 def init_state():
     # Define session state keys to store required information
@@ -43,20 +44,24 @@ def init_layout():
     st.sidebar.image(u.LOGO_PATH, width=300)
     st.sidebar.title('FYDP Demo - Try it Out!')
     with st.sidebar:
-        if st.button("Check for New Messages"):
+        if st.button("Update Date"):
             recv_data()
+            
+    col1, col2, col3 = st.columns(3)
         
     ### Graphs
     x_data = np.arange(len(st.session_state['bit_rate_data']))
     # Bit rate
-    bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'], x_data, "Bit Rate", "Time", "#FF9933")
-    st.plotly_chart(bit_rate_graph, use_container_width=True, theme=None)
+    with col1:
+        bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'], x_data, "Bit Rate", "Time", "#FF9933")
+        st.plotly_chart(bit_rate_graph, use_container_width=True, theme=None)
     # Packet Drop Rate
-    pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'], x_data, "Dropped Packets", "Time", "#23A5A5")
-    st.plotly_chart(pkt_drop_graph, use_container_width=True, theme=None)
+    with col2:
+        pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'], x_data, "Dropped Packets", "Time", "#23A5A5")
+        st.plotly_chart(pkt_drop_graph, use_container_width=True, theme=None)
     # Received Messages
-    for message in st.session_state['messages']:
-        st.caption(message, unsafe_allow_html=False)
+    with col3:
+        st.caption(','.join(st.session_state['messages']), unsafe_allow_html=False)
 
 # Message: queue of messages to recv
 # Data: queue of data to recv
@@ -66,9 +71,13 @@ def init_ssh_connection(_messages: Queue, _data: Queue)-> RpiB:
     r_pi.exec()
     return r_pi
 
+# Refresh every 10 seconds
+st_autorefresh(interval=10 * 1000, key="recv_refresh")
+
 # Define session state keys to store required information
 init_state()
 r_pi: RpiB = init_ssh_connection(st.session_state['msg_queue'], st.session_state['data_queue'])
+recv_data()
 init_layout()
 
 

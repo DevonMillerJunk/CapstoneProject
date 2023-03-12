@@ -57,17 +57,15 @@ class RpiB:
         for line in iter(stdout.readline, ""):
             if line.startswith("DAT:"):
                 # Received Data
-                data = line[4:].split(",")
-                print(f'Received data: {data}')
+                data = line[4:].replace("\r\n","").split(",")
                 try:
-                    self.data_queue.put_nowait((data[0], data[1]))
+                    self.data_queue.put_nowait((float(data[0]), float(data[1])))
                 except:
                     pass
             elif line.startswith("MSG:"):
                 # Received a message
-                msg = line[4:]
+                msg = line[4:].strip()
                 if len(msg) > 0:
-                    print(f'Received message: {msg}')
                     try:
                         self.msg_queue.put_nowait(msg)
                     except:
