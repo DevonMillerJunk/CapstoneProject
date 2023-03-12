@@ -31,7 +31,7 @@ def run_test(arguments):
             
             # Send the data for that message
             data_msg = f'DAT:{float(total_bits) / (end_t - start_t)},{100 * float(node.dropped_packets) / float(node.dropped_packets + node.sent_packets + node.received_packets)}'
-            node.send(data_msg, conn_addr)
+            node.send(data_msg.encode(), conn_addr)
     except Exception as e:
         print(f'Exception in transmitter: {str(e)}')
         print(traceback.format_exc())

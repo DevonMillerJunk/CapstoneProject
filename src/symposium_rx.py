@@ -20,8 +20,7 @@ def run_test(arguments):
         while True:
             received_message = node.recv(5)
             if received_message is not None:
-                (payload, addr) = received_message
-                recv_bits += 8 * len(payload.decode())
+                (payload, _) = received_message
                 print(payload.decode().strip())
     except Exception as e:
         print(f'Exception in receiver: {str(e)}')
