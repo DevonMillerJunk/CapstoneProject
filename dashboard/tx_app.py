@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import util as u
-import time
 from queue import Queue
 from ssh_connection import RpiA
 
