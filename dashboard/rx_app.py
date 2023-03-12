@@ -1,47 +1,75 @@
 import streamlit as st
-import pandas as pd
-import random
-import string
+import numpy as np
+import plotly.graph_objects as go
+import util as u
+from queue import Queue
+from ssh_connection import RpiB
 
-LOGO_PATH = "../images/frequensea.png"
+def init_state():
+    # Define session state keys to store required information
+    if "msg_queue" not in st.session_state:
+        # Consumer queue of messages received
+        st.session_state['msg_queue'] = Queue()
+    if "data_queue" not in st.session_state:
+        # Consumer queue of data to received
+        st.session_state['data_queue'] = Queue()
+    if "bit_rate_data" not in st.session_state:
+        # Array of bit rate data
+        st.session_state['bit_rate_data'] = []
+    if "pkt_drop_data" not in st.session_state:
+        # Array of packet drop rate data
+        st.session_state['pkt_drop_data'] = []
+    if "messages" not in st.session_state:
+        # Array of messages received
+        st.session_state['messages'] = []
+    
+def recv_data():
+    try:
+        while not st.session_state['data_queue'].empty():
+            (bit_rate, pkt_drop_rate) = st.session_state['data_queue'].get_nowait()
+            st.session_state['bit_rate_data'].append(bit_rate)
+            st.session_state['pkt_drop_data'].append(pkt_drop_rate)
+        while not st.session_state['msg_queue'].empty():
+            msg = st.session_state['msg_queue'].get_nowait()
+            st.session_state['messages'].append(msg)
+    except Exception as e:
+        print(f'Error reading from queue: {e}')
+        
+def init_layout():
+    ### Title
+    st.header('Receiver - Communication Result')
+    
+    ### Sidebar
+    st.sidebar.image(u.LOGO_PATH, width=300)
+    st.sidebar.title('FYDP Demo - Try it Out!')
+    with st.sidebar:
+        if st.button("Check for New Messages"):
+            recv_data()
+        
+    ### Graphs
+    x_data = np.arange(len(st.session_state['bit_rate_data']))
+    # Bit rate
+    bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'], x_data, "Bit Rate", "Time", "#FF9933")
+    st.plotly_chart(bit_rate_graph, use_container_width=True, theme=None)
+    # Packet Drop Rate
+    pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'], x_data, "Dropped Packets", "Time", "#23A5A5")
+    st.plotly_chart(pkt_drop_graph, use_container_width=True, theme=None)
+    # Received Messages
+    for message in st.session_state['messages']:
+        st.caption(message, unsafe_allow_html=False)
 
-# Generate random data for testing received Data
-def check_for_received_data(lent=6):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(lent))
-    st.session_state['rx_data'].append(result_str)
-    return result_str
+# Message: queue of messages to recv
+# Data: queue of data to recv
+@st.cache_resource
+def init_ssh_connection(_messages: Queue, _data: Queue)-> RpiB:
+    r_pi = RpiB(_messages, _data)
+    r_pi.exec()
+    return r_pi
 
-if "rx_data" not in st.session_state:
-    st.session_state['rx_data'] = []
+# Define session state keys to store required information
+init_state()
+r_pi: RpiB = init_ssh_connection(st.session_state['msg_queue'], st.session_state['data_queue'])
+init_layout()
 
-# Define Streamlit elements
-st.header('Receiver - Communication Result')
-st.sidebar.image(LOGO_PATH, width=300)
-st.sidebar.title('FYDP Demo - Try it Out!')
-rec_msg = None
 
-# Created Button that you could click to check for messages 
-with st.sidebar:
-    if st.button("Check for New Messages"):
-        rec_msg = check_for_received_data()
 
-# if msg is received then print msg and table of all messages with number of bits sent next to it
-if rec_msg:
-    st.subheader(f'Received New Message: {rec_msg}') 
-
-    st.markdown("""---""")
-
-    str_bytes = [len(s.encode('utf-8'))*8 for s in st.session_state['rx_data']]
-
-    received_data = pd.DataFrame(
-        {
-            "Received Data": st.session_state['rx_data'],
-            "Received Bits": str_bytes
-        }
-    )
-
-    st.dataframe(received_data)
-
-else:
-    st.text("Waiting For Message")
