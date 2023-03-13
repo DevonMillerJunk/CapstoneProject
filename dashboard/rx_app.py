@@ -17,22 +17,30 @@ def init_state():
     if "bit_rate_data" not in st.session_state:
         # Array of bit rate data
         st.session_state['bit_rate_data'] = []
+    if "num_bits_recv" not in st.session_state:
+        # Total Bits Received
+        st.session_state['num_bits_recv'] = 0
     if "pkt_drop_data" not in st.session_state:
         # Array of packet drop rate data
         st.session_state['pkt_drop_data'] = []
     if "messages" not in st.session_state:
         # Array of messages received
         st.session_state['messages'] = []
+    if "num_messages" not in st.session_state:
+        # Number of messages received
+        st.session_state['num_messages'] = 0
     
 def recv_data():
     try:
         while not st.session_state['data_queue'].empty():
-            (bit_rate, pkt_drop_rate) = st.session_state['data_queue'].get_nowait()
+            (bit_rate, num_bits, pkt_drop_rate) = st.session_state['data_queue'].get_nowait()
             st.session_state['bit_rate_data'].append(bit_rate)
             st.session_state['pkt_drop_data'].append(pkt_drop_rate)
+            st.session_state['num_bits_recv'] += num_bits
         while not st.session_state['msg_queue'].empty():
             msg = st.session_state['msg_queue'].get_nowait()
             st.session_state['messages'].append(msg)
+            st.session_state['num_messages'] += 1
     except Exception as e:
         print(f'Error reading from queue: {e}')
         

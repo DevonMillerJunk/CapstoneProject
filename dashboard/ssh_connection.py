@@ -59,7 +59,7 @@ class RpiB:
                 # Received Data
                 data = line[4:].replace("\r\n","").split(",")
                 try:
-                    self.data_queue.put_nowait((float(data[0]), float(data[1])))
+                    self.data_queue.put_nowait((float(data[0]), float(data[1]), float(data[2])))
                 except:
                     pass
             elif line.startswith("MSG:"):
