@@ -65,3 +65,5 @@ BUF_SZ = LORA_BUF_SZ_DIC.get(s.BUF_SZ)
 # RSSI (receive signal strength indicator)
 RSSI = s.RSSI
 RSSI_VAL = 0x80 if RSSI else 0x00
+
+PACKET_DATA_SZ = 219
