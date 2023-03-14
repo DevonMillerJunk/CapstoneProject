@@ -77,7 +77,7 @@ def display_elements():
                 During testing, it was essential to record and analyze the performance of the radio, including the frequency of dropped packets, frequency of bit errors, and types of bit errors.
                 From this information, we ensured that the system met and exceeded our requirements.
             """)
-            st.image("../images/group-photo.jpg", caption="Testing Data")
+            st.image("../images/river-test-results.png", caption="Test Results from Waterloo River")
         
     with c.expander("Simple Library"):
         col1, col2 = st.columns([3,5])
