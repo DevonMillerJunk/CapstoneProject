@@ -93,16 +93,7 @@ def display_elements():
         
 def init_layout():
     # Title
-    hdr_col1, hdr_col2, hdr_col3, hdr_col4 = st.columns([1,2,2,1])
-    with hdr_col1:
-        st.write("")
-    with hdr_col2:
-        st.image(u.LOGO_PATH)
-    with hdr_col3:
-        st.title("FrequenSea Transmitter")
-    with hdr_col4:
-        st.write("")
-        
+    u.gen_header("FrequenSea Transmitter")
     space(lines=4)
         
     # Input

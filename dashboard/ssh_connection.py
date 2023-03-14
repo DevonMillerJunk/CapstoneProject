@@ -2,6 +2,7 @@ from paramiko import SSHClient, AutoAddPolicy
 from queue import Queue
 import threading
 import time
+from datetime import datetime
 
 username = "pi"
 password = "raspberry"
@@ -59,7 +60,7 @@ class RpiB:
                 # Received Data
                 data = line[4:].replace("\r\n","").split(",")
                 try:
-                    self.data_queue.put_nowait((float(data[0]), float(data[1]), float(data[2])))
+                    self.data_queue.put_nowait((float(data[0]), float(data[1]), float(data[2]), datetime.now()))
                 except:
                     pass
             elif line.startswith("MSG:"):

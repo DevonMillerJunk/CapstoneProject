@@ -132,7 +132,8 @@ With a pair of Raspberry Pi and SX1262 LoRa Hats, one is able to set up a transm
     - [x] Implementation of CRC code generation
     - [x] Error Correction through RS decoding
     - [x] Optimization of parameters
-- [ ] Network Implementation
+    - [ ] Adaptive Code word lengths
+- [x] Network Implementation
     - [x] Packetization of the data
     - [x] Timing and ackknowledgements
     - [x] Integration of Error Encoding and Decoding

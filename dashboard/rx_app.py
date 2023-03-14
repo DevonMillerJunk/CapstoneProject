@@ -1,13 +1,13 @@
 import streamlit as st
-st.set_page_config(layout="wide")
-import numpy as np
 import plotly.graph_objects as go
 import util as u
 from queue import Queue
 from ssh_connection import RpiB
 from streamlit_autorefresh import st_autorefresh
-import base64
-from datetime import datetime
+st.set_page_config(layout="wide")
+
+kept_datapoints = 200
+kept_messages = 3
 
 def init_state():
     # Define session state keys to store required information
@@ -43,51 +43,51 @@ def load_css(file_name):
 def recv_data():
     try:
         while not st.session_state['data_queue'].empty():
-            (bit_rate, num_bits, pkt_drop_rate) = st.session_state['data_queue'].get_nowait()
-            st.session_state['timestamp'].append(datetime.now())
+            (bit_rate, num_bits, pkt_drop_rate, timestamp) = st.session_state['data_queue'].get_nowait()
+            # Timestamps
+            st.session_state['timestamp'].append(timestamp)
+            if len(st.session_state['timestamp']) > kept_datapoints:
+                st.session_state['timestamp'].pop(0)
+            # Bit rate
             st.session_state['bit_rate_data'].append(bit_rate)
+            if len(st.session_state['bit_rate_data']) > kept_datapoints:
+                st.session_state['bit_rate_data'].pop(0)
+            # Pkt drop rate    
             st.session_state['pkt_drop_data'].append(pkt_drop_rate)
+            if len(st.session_state['pkt_drop_data']) > kept_datapoints:
+                st.session_state['pkt_drop_data'].pop(0)
+            # num bits  
             st.session_state['num_bits_recv'] += num_bits
         while not st.session_state['msg_queue'].empty():
             msg = st.session_state['msg_queue'].get_nowait()
+            # Messages queue
             st.session_state['messages'].append(msg)
+            if len(st.session_state['messages']) > kept_messages:
+                st.session_state['messages'].pop(0)
+            # Num messages    
             st.session_state['num_messages'] += 1
     except Exception as e:
         print(f'Error reading from queue: {e}')
 
 def init_layout():
-
-    num_to_plot = 200 # Maximum # of Data Points to Plot
-
     ### Title Header
-    st.markdown(
-        f"""
-        <div class="block-container">
-            <img class="logo-img" src="data:image/png;base64,{base64.b64encode(open(u.LOGO_PATH, "rb").read()).decode()}" style="width:300px;height:80px">
-            <p class="logo-text">Receiver - Communication Results</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    u.gen_header("Receiver - Communication Results")
     st.markdown("""---""")
-
-    recv_data()
-            
-    col1, col2, col3, col4 = st.columns((2,2,1,1))
         
     ### Graphs
-    x_data = st.session_state['timestamp'][-num_to_plot:]
-
+    col1, col2, col3, col4 = st.columns((2,2,1,1))
+    
     # Bit Rate Graph
     with col1:
         # Plot Graph
-        bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'][-num_to_plot:], x_data, "Bit Rate (bps)", "Time", "#FF9933")
+        bit_rate_bounds = [max(0,min(st.session_state['bit_rate_data']) - 35), max(st.session_state['bit_rate_data']) + 15] if len(st.session_state['bit_rate_data']) > 0 else [1700, 1800]
+        bit_rate_graph: go.Figure = u.gen_scatter("Bit Rate", st.session_state['bit_rate_data'], st.session_state['timestamp'], "Bit Rate (bps)", "Time", "#FF9933", bit_rate_bounds)
         st.plotly_chart(bit_rate_graph, use_container_width=True, theme=None)
         
     # Packet Drop Rate Graph
     with col2:
         # Create Graph
-        pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'][-num_to_plot:], x_data, "% Dropped Packets", "Time", "#23A5A5", [0,100])
+        pkt_drop_graph: go.Figure = u.gen_scatter("Dropped Packet Rate", st.session_state['pkt_drop_data'], st.session_state['timestamp'], "% Dropped Packets", "Time", "#23A5A5", [0,100])
         st.plotly_chart(pkt_drop_graph, use_container_width=True, theme=None)
     
     # Metrics
@@ -97,8 +97,8 @@ def init_layout():
             cur_bit_rate, delta_bit_rate = u.gen_metric_delta(st.session_state['bit_rate_data'])
             st.metric(
                 label="Bit Rate", 
-                value= f"{cur_bit_rate} bps", 
-                delta= f"{delta_bit_rate} bps",
+                value= f"{round(cur_bit_rate, 1)} bps", 
+                delta= f"{round(delta_bit_rate, 4)} bps",
             )
 
         # Create Metric
@@ -111,13 +111,13 @@ def init_layout():
             )
 
         st.metric(
-                label="Number of Messages Received", 
+                label="Messages Received", 
                 value= f"{st.session_state['num_messages']}", 
             )
 
         st.metric(
-                label="Number of Bits Received", 
-                value= f"{st.session_state['num_bits_recv']}", 
+                label="Data Received", 
+                value= u.format_bits(st.session_state['num_bits_recv']), 
             )
     
     # Display Received Messages
@@ -127,8 +127,6 @@ def init_layout():
             msgs = u.select_messages(st.session_state['messages'])
 
             st.markdown(msgs, unsafe_allow_html=True)
-        
-        #st.caption(','.join(st.session_state['messages']), unsafe_allow_html=False)
 
 # Message: queue of messages to recv
 # Data: queue of data to recv
@@ -139,7 +137,7 @@ def init_ssh_connection(_messages: Queue, _data: Queue)-> RpiB:
     return r_pi
 
 # Refresh every 10 seconds
-st_autorefresh(interval=10 * 1000, key="recv_refresh")
+st_autorefresh(interval=6 * 1000, key="recv_refresh")
 
 # Define session state keys to store required information
 init_state()
