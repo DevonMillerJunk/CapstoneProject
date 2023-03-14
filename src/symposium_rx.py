@@ -22,6 +22,8 @@ def run_test(arguments):
             if received_message is not None:
                 (payload, _) = received_message
                 print(payload.decode().strip())
+            else:
+                print(f'DAT:{0.0},{0},{0.0}')
     except Exception as e:
         print(f'Exception in receiver: {str(e)}')
         print(traceback.format_exc())

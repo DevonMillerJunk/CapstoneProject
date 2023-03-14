@@ -26,6 +26,7 @@ class RpiA:
                 message = ' '
                 try:
                     message = self.msg_queue.get(timeout=2)
+                    print(f'[SSH] sending message:{message}')
                 except:
                     pass
                 stdin.write(f"{message}\n")
@@ -71,9 +72,7 @@ class RpiB:
                         self.msg_queue.put_nowait(msg)
                     except:
                         pass
-            else:
-                # Print to command line in all other circumstances
-                print(line, end="")
+            print(line, end="")
         stdin.close()
         stdout.close()
         stderr.close()

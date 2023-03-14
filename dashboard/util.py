@@ -19,7 +19,7 @@ def gen_scatter(title: str, y_data: list[float], x_data: list[float], y_label: s
     fig.update_layout(
         title=title,
         title_font =dict(size=24),
-        xaxis = go.layout.XAxis(nticks = 3, tickformat = '%I:%M:%S %p', tickangle=15, minor=dict(showgrid=True)),
+        xaxis = go.layout.XAxis(nticks = 3, tickformat = '%I:%M:%S %p', tickangle=15, showgrid=True),
         yaxis= go.layout.YAxis(title=y_label, range=yaxis_range),
         font = dict(
             size=16,
@@ -42,7 +42,7 @@ def gen_message_html(message: str, colour: str) -> str:
 
 def select_messages(data: list[str]):
     colours = ["red", "green", "blue"]
-    return f"<div>{'<br><br>'.join([gen_message_html(x, colours[i%len(colours)]) for i,x in enumerate(data)])}</div>"
+    return f"<div>{'<br><br>'.join([gen_message_html(x, colours[i%len(colours)]) for i,x in enumerate(data.reverse())])}</div>"
             
 def format_bits(num_bits: int) -> str:
     if num_bits < 1000:

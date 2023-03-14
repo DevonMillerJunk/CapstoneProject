@@ -137,7 +137,7 @@ def init_ssh_connection(_messages: Queue, _data: Queue)-> RpiB:
     return r_pi
 
 # Refresh every 10 seconds
-st_autorefresh(interval=6 * 1000, key="recv_refresh")
+st_autorefresh(interval=3 * 1000, key="recv_refresh")
 
 # Define session state keys to store required information
 init_state()

@@ -65,7 +65,7 @@ def display_elements():
             """)
         
     with c.expander("Testing our Project"):
-        col1, col2 = st.columns([3,10])
+        col1, col2 = st.columns([2,3])
         with col1:
             st.image("../images/river-testing.jpg", caption="Testing in Waterloo Park")
         with col2:
@@ -73,10 +73,11 @@ def display_elements():
                 Testing of our underwater radios in different conditions was essential to evaluating the performance of the system.
                 We needed to test in different environmental conditions, at different ranges, and at different depths.
                 The radios were evaluated in clear (tap) water and murky river water at ranges of up to 12 meters to determine how resilient the system was.
-                We can be seen in the picture to the left testing in the Waterloo Park Creek, with extremely murky water, and yet the system performs well and is able to achieve a bit rate of 1.756kbps.
+                We can be seen in the picture to the left testing in the Waterloo Park Creek, with extremely murky water, and yet the system performs well and is able to achieve a bit rate of 1.765kbps.
                 During testing, it was essential to record and analyze the performance of the radio, including the frequency of dropped packets, frequency of bit errors, and types of bit errors.
                 From this information, we ensured that the system met and exceeded our requirements.
             """)
+            st.image("../images/group-photo.jpg", caption="Testing Data")
         
     with c.expander("Simple Library"):
         col1, col2 = st.columns([3,5])
@@ -93,7 +94,7 @@ def display_elements():
         
 def init_layout():
     # Title
-    u.gen_header("FrequenSea Transmitter")
+    u.gen_header("Transmitter")
     space(lines=4)
         
     # Input

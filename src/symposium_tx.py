@@ -26,11 +26,13 @@ def run_test(arguments):
             len_suffix = 0 if (len(combined_input) % c.PACKET_DATA_SZ == 0) else (c.PACKET_DATA_SZ - (len(combined_input) % c.PACKET_DATA_SZ))
             total_msg = (combined_input + (' ' * len_suffix)).encode()
             total_bits = 8 * len(total_msg)
+            print(f'[PI]: sending {input1}')
             start_t = time.time()
             node.send(total_msg, conn_addr)
             end_t = time.time()
             
             # Send the data for that message
+            print(f'[PI]: sending data')
             data_msg = f'DAT:{float(total_bits) / (end_t - start_t)},{total_bits},{100 * float(node.dropped_packets) / float(node.dropped_packets + node.sent_packets + node.received_packets)}'
             node.send(data_msg.encode(), conn_addr)
     except Exception as e:
