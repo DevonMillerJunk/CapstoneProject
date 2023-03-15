@@ -61,7 +61,19 @@ def display_elements():
             st.image("../images/container.jpg", caption="Inside Our Container")
         with col1:
             st.write("""
-                TODO: need to insert explanation
+                Our 3D-printed container was designed to keep the electronics safe from water while in operation.
+                The initial prototype container was composed of seven modular components used for design iterations. 
+                Once the design was finalized, the components were glued together with a plastic bonding epoxy and tested underwater. 
+                We chose to use PLA+ to print our container, as it results in a stronger print than regular PLA. 
+                The container was printed with three outer layers to increase rigidity and minimize microscopic gaps through which water could enter, and with a cubic infill pattern with a density of 20%. 
+                They were also printed with a variable layer height, which allowed us to increase the printing speed while preserving dimensional accuracy and fine details. 
+                The final prototypes were printed as three solid pieces with two smaller pieces used to secure the electronics inside. 
+                This avoided the need for epoxy and significantly reduced the risk of water entering the container through microscopic gaps between the components. 
+                The internal electronics mounting components allow us to easily secure and remove the electronics when maintenance is necessary.
+
+                The biggest concern when waterproofing the container was the design of the lids.
+                We chose a threaded lid design that screws into the container, as it maximizes the surface area between the lid and the container, and, when combined with a thin layer of plumber's tape, the extra surface area provided a better barrier between the inside of our container and the water.
+                As a precaution, a layer of waterproof caulk was carefully applied to a groove in the top of the container, which creates an extra seal when the lid is fully in place. 
             """)
         
     with c.expander("Testing our Project"):
