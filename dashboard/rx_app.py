@@ -106,8 +106,8 @@ def init_layout():
             cur_drop_rate, delta_drop_rate = u.gen_metric_delta(st.session_state['pkt_drop_data'])
             st.metric(
                 label="% Dropped Packets", 
-                value= f"{cur_drop_rate} %", 
-                delta= f"{delta_drop_rate} %",
+                value= f"{round(cur_drop_rate, 4)} %", 
+                delta= f"{round(delta_drop_rate, 6)} %",
             )
 
         st.metric(
