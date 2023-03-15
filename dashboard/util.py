@@ -42,7 +42,7 @@ def gen_message_html(message: str, colour: str) -> str:
 
 def select_messages(data: list[str]):
     colours = ["red", "green", "blue"]
-    return f"<div>{'<br><br>'.join([gen_message_html(x, colours[i%len(colours)]) for i,x in enumerate(data.reverse())])}</div>"
+    return f"<div>{'<br><br>'.join([gen_message_html(x, colours[i%len(colours)]) for i,x in enumerate(reversed(data))])}</div>"
             
 def format_bits(num_bits: int) -> str:
     if num_bits < 1000:
